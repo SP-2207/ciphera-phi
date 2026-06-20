@@ -177,7 +177,7 @@ export default function CompeteBoard({ roomId, role, onRestart }) {
         </div>
       )}
 
-      <div className="compete-layout">
+      <div className={`compete-layout${gameOver ? '' : ' single'}`}>
         <PlayerGrid
           label="You"
           isYours={true}
@@ -185,13 +185,15 @@ export default function CompeteBoard({ roomId, role, onRestart }) {
           currentInput={currentInput}
           activeRow={activeRow}
         />
-        <PlayerGrid
-          label="Opponent"
-          isYours={false}
-          guesses={oppGuesses}
-          currentInput=""
-          activeRow={-1}
-        />
+        {gameOver && (
+          <PlayerGrid
+            label="Opponent"
+            isYours={false}
+            guesses={oppGuesses}
+            currentInput=""
+            activeRow={-1}
+          />
+        )}
       </div>
 
       {!gameOver && <Keypad onKey={handleKey} />}

@@ -452,6 +452,18 @@
   }
 }
 
+.compete-layout.single {
+  grid-template-columns: 1fr;
+  max-width: 380px;
+  justify-items: center;
+}
+
+.compete-layout.single .cell {
+  width: 52px;
+  height: 52px;
+  font-size: 1.5rem;
+}
+
 .compete-panel {
   display: flex;
   flex-direction: column;
