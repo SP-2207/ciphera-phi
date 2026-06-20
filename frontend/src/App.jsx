@@ -17,8 +17,16 @@ export default function App() {
     const hash = window.location.hash.slice(1)
     const match = hash.match(/^compete\/([A-Z][A-Z0-9]{5})$/)
     if (match) {
-      setRoomId(match[1])
-      setIsInvite(true)
+      const foundRoomId = match[1]
+      setRoomId(foundRoomId)
+      // Same device already joined this room — rejoin directly without creating a new slot
+      const saved = localStorage.getItem(`ciphera_compete_${foundRoomId}`)
+      if (saved) {
+        setPlayerId(saved)
+        setMode('compete')
+      } else {
+        setIsInvite(true)
+      }
     }
   }, [])
 
@@ -37,6 +45,7 @@ export default function App() {
             setCreating(false)
             return
           }
+          localStorage.setItem(`ciphera_compete_${roomId}`, id)
           setPlayerId(id)
           setMode('compete')
         } catch (err) {
@@ -56,6 +65,7 @@ export default function App() {
         }
         setRoomId(id)
         setPlayerId('host')
+        localStorage.setItem(`ciphera_compete_${id}`, 'host')
         setMode('compete')
       }
       setCreating(false)
