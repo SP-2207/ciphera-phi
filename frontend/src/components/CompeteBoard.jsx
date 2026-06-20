@@ -175,15 +175,15 @@ export default function CompeteBoard({ roomId, playerId, onRestart }) {
     }
     const anyWon = won || opponents.some(([, p]) => p.won)
     const parts = [
-      'Number Wordle [Compete]',
+      'Ciphera [Compete]',
       section('You', myGuesses, won),
       ...opponents.map(([, p], i) => section(`Opponent ${i + 1}`, p.guesses, p.won)),
     ]
     return parts.join('\n\n') + (!anyWon ? `\n\nAnswer: ${secret}` : '')
   }
 
-  // Grid column count: 2 players→2 cols, 3→3 cols, 4→2×2
-  const cols = totalPlayers <= 2 ? 2 : totalPlayers === 3 ? 3 : 2
+  // Grid column count: 1→centred single, 2→2 cols, 3→3 cols, 4→2×2
+  const cols = totalPlayers <= 1 ? 1 : totalPlayers === 2 ? 2 : totalPlayers === 3 ? 3 : 2
 
   if (!secret) {
     return <div className="game"><p className="loading-msg">Loading game room…</p></div>
@@ -195,7 +195,7 @@ export default function CompeteBoard({ roomId, playerId, onRestart }) {
         <div className="header-left">
           <button className="icon-btn" onClick={onRestart} title="Change mode">←</button>
         </div>
-        <h1>Number Wordle</h1>
+        <h1>Ciphera</h1>
         <div className="header-right">
           <span className="mode-badge compete">compete</span>
           <button className="icon-btn info-btn" onClick={() => setShowInfo(true)} title="How to play">?</button>

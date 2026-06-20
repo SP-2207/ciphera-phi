@@ -116,7 +116,7 @@ export default function GameBoard({ mode, onRestart }) {
         <div className="header-left">
           <button className="icon-btn" onClick={onRestart} title="Change mode">←</button>
         </div>
-        <h1>Number Wordle</h1>
+        <h1>Ciphera</h1>
         <div className="header-right">
           <span className={`mode-badge ${mode}`}>{mode}</span>
           <button className="icon-btn info-btn" onClick={() => setShowInfo(true)} title="How to play">?</button>

@@ -70,7 +70,7 @@ export function getClues(secret, guess) {
 export function buildShareText(guesses, won, secret, mode) {
   const score = won ? guesses.length : 'X'
   const label = mode.charAt(0).toUpperCase() + mode.slice(1)
-  const header = `Number Wordle ${score}/${MAX_GUESSES} [${label}]`
+  const header = `Ciphera ${score}/${MAX_GUESSES} [${label}]`
   const rows = guesses
     .map(({ clues }) =>
       clues.map(c => (c === 'correct' ? '🟩' : c === 'present' ? '🟨' : '⬛')).join('')

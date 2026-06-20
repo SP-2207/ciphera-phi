@@ -315,6 +315,13 @@
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+  position: sticky;
+  bottom: 0;
+  background: #121213;
+  padding: 0.4rem 0 max(0.5rem, env(safe-area-inset-bottom));
+  width: 100%;
+  align-items: center;
+  z-index: 10;
 }
 
 .keypad-row {
@@ -442,6 +449,13 @@
   gap: 1.5rem;
   width: 100%;
   max-width: 1000px;
+}
+
+/* Single player: centred column */
+.compete-layout[data-players="1"] {
+  grid-template-columns: 1fr !important;
+  max-width: 400px;
+  justify-items: center;
 }
 
 /* 3-4 player layouts need smaller cells to fit */
@@ -639,4 +653,44 @@
   align-items: center;
   gap: 0.65rem;
   font-size: 0.8rem;
+}
+
+/* ── Mobile responsive ───────────────────────────── */
+
+@media (max-width: 480px) {
+  .game {
+    gap: 0.55rem;
+    padding: 0 0.5rem 0.5rem;
+  }
+
+  /* Smaller grid cells on mobile */
+  .cell {
+    width: 42px;
+    height: 42px;
+    font-size: 1.25rem;
+  }
+
+  /* Smaller cells in compete panels on mobile */
+  .compete-layout .cell {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  /* Smaller keypad keys on mobile */
+  .key {
+    width: 68px;
+    height: 46px;
+    font-size: 1.2rem;
+  }
+
+  .header h1 {
+    font-size: 1.1rem;
+    letter-spacing: 0.08em;
+  }
+
+  .share-banner {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.7rem;
+  }
 }

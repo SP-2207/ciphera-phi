@@ -2,7 +2,7 @@ export default function ModeSelect({ onSelect, isInvite, loading }) {
   if (loading) {
     return (
       <div className="mode-select">
-        <h1>Number Wordle</h1>
+        <h1>Ciphera</h1>
         <p className="mode-subtitle">Creating game room…</p>
       </div>
     )
@@ -10,7 +10,7 @@ export default function ModeSelect({ onSelect, isInvite, loading }) {
   if (isInvite) {
     return (
       <div className="mode-select">
-        <h1>Number Wordle</h1>
+        <h1>Ciphera</h1>
         <div className="invite-card">
           <div className="invite-icon">⚔️</div>
           <h2>You've been challenged!</h2>
@@ -25,7 +25,7 @@ export default function ModeSelect({ onSelect, isInvite, loading }) {
 
   return (
     <div className="mode-select">
-      <h1>Number Wordle</h1>
+      <h1>Ciphera</h1>
       <p className="mode-subtitle">Choose your game mode</p>
       <div className="mode-cards">
         <button className="mode-card" onClick={() => onSelect('classic')}>
@@ -39,7 +39,7 @@ export default function ModeSelect({ onSelect, isInvite, loading }) {
           <span className="mode-icon">⏱️</span>
           <span className="mode-text">
             <span className="mode-name">Timed</span>
-            <span className="mode-desc">15 seconds per guess — stay sharp!</span>
+            <span className="mode-desc">20 seconds per guess — stay sharp!</span>
           </span>
         </button>
         <button className="mode-card" onClick={() => onSelect('compete')}>
