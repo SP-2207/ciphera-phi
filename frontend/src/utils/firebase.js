@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app'
-import { getDatabase, ref, set, update, onValue } from 'firebase/database'
+import { getDatabase, ref, set, get, update, onValue } from 'firebase/database'
 
 const firebaseConfig = {
   apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
@@ -18,7 +18,6 @@ export function isFirebaseConfigured() {
 let db = null
 function getDb() {
   if (!db) {
-    // Avoid "app already exists" error from React strict mode double-invoke
     const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
     db = getDatabase(app)
   }
@@ -26,21 +25,30 @@ function getDb() {
 }
 
 export async function createRoom(roomId, encodedSecret) {
-  // Firebase drops empty arrays, so use null as placeholder instead
   await set(ref(getDb(), `games/${roomId}`), {
     secret: encodedSecret,
     createdAt: Date.now(),
-    host:  { done: false, won: false },
-    guest: { done: false, won: false },
+    players: {
+      host: { done: false, won: false },
+    },
   })
+}
+
+export async function joinRoom(roomId) {
+  const snap = await get(ref(getDb(), `games/${roomId}/players`))
+  const existing = snap.val() || {}
+  if (Object.keys(existing).length >= 4) return null  // room full
+  const playerId = 'g_' + Math.random().toString(36).slice(2, 8)
+  await set(ref(getDb(), `games/${roomId}/players/${playerId}`), { done: false, won: false })
+  return playerId
 }
 
 export function subscribeToRoom(roomId, callback) {
   return onValue(ref(getDb(), `games/${roomId}`), snap => callback(snap.val()))
 }
 
-export async function pushPlayerState(roomId, role, guesses, clues, done, won) {
-  await update(ref(getDb(), `games/${roomId}/${role}`), { guesses, clues, done, won })
+export async function pushPlayerState(roomId, playerId, guesses, clues, done, won) {
+  await update(ref(getDb(), `games/${roomId}/players/${playerId}`), { guesses, clues, done, won })
 }
 
 function toArray(val) {

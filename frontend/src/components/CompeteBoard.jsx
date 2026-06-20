@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { DIGITS, MAX_GUESSES, getClues, decodeSecret, encodeClues, decodeClues, buildShareText } from '../utils/gameLogic'
+import { DIGITS, MAX_GUESSES, getClues, decodeSecret, encodeClues, decodeClues } from '../utils/gameLogic'
 import { subscribeToRoom, pushPlayerState, parsePlayerData } from '../utils/firebase'
 import Keypad from './Keypad'
 import InfoModal from './InfoModal'
@@ -16,35 +16,37 @@ function PlayerGrid({ label, isYours, guesses, currentInput, activeRow }) {
         {Array.from({ length: MAX_GUESSES }, (_, i) => {
           const g = guesses[i]
           const active = isYours && i === activeRow
-          const display = active
+          const rawDisplay = active
             ? currentInput.padEnd(DIGITS, ' ')
             : (g?.guess || '').padEnd(DIGITS, ' ')
           const clues = (active || !g) ? Array(DIGITS).fill('') : decodeClues(g.clues || '')
           return (
             <div key={i} className="row">
               {Array.from({ length: DIGITS }, (_, j) => (
-                <Cell key={j} digit={display[j] === ' ' ? '' : display[j]} clue={clues[j]} />
+                <Cell
+                  key={j}
+                  digit={isYours ? (rawDisplay[j] === ' ' ? '' : rawDisplay[j]) : ''}
+                  clue={clues[j]}
+                />
               ))}
             </div>
           )
         })}
       </div>
       {!isYours && guesses.length === 0 && (
-        <p className="waiting-msg">Waiting for opponent…</p>
+        <p className="waiting-msg">Waiting…</p>
       )}
     </div>
   )
 }
 
-export default function CompeteBoard({ roomId, role, onRestart }) {
+export default function CompeteBoard({ roomId, playerId, onRestart }) {
   const [secret, setSecret] = useState(null)
   const [myGuesses, setMyGuesses] = useState([])
-  const [oppGuesses, setOppGuesses] = useState([])
+  const [allPlayers, setAllPlayers] = useState({})
   const [currentInput, setCurrentInput] = useState('')
   const [gameOver, setGameOver] = useState(false)
   const [won, setWon] = useState(false)
-  const [oppDone, setOppDone] = useState(false)
-  const [oppWon, setOppWon] = useState(false)
   const [error, setError] = useState('')
   const [showInfo, setShowInfo] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -53,7 +55,6 @@ export default function CompeteBoard({ roomId, role, onRestart }) {
   const gameOverRef = useRef(false)
   const myGuessesRef = useRef([])
   const currentInputRef = useRef('')
-  const oppRole = role === 'host' ? 'guest' : 'host'
   const shareLink = `${window.location.origin}${window.location.pathname}#compete/${roomId}`
 
   useEffect(() => { myGuessesRef.current = myGuesses }, [myGuesses])
@@ -68,13 +69,15 @@ export default function CompeteBoard({ roomId, role, onRestart }) {
         const s = decodeSecret(room.secret)
         if (s) { secretRef.current = s; setSecret(s) }
       }
-      const opp = parsePlayerData(room[oppRole])
-      setOppGuesses(opp.guesses)
-      setOppDone(opp.done)
-      setOppWon(opp.won)
+      const playersRaw = room.players || {}
+      const parsed = {}
+      for (const [id, data] of Object.entries(playersRaw)) {
+        parsed[id] = parsePlayerData(data)
+      }
+      setAllPlayers(parsed)
     })
     return unsub
-  }, [roomId, oppRole])
+  }, [roomId])
 
   useEffect(() => {
     function onKeyDown(e) {
@@ -109,7 +112,7 @@ export default function CompeteBoard({ roomId, role, onRestart }) {
     else if (next.length >= MAX_GUESSES) { setGameOver(true); gameOverRef.current = true }
 
     pushPlayerState(
-      roomId, role,
+      roomId, playerId,
       next.map(r => r.guess),
       next.map(r => r.clues),
       isDone, isWin
@@ -128,31 +131,62 @@ export default function CompeteBoard({ roomId, role, onRestart }) {
   }
 
   async function copyText(text) {
-    try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch {}
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {}
   }
 
+  // Separate my data from opponents
+  const opponents = Object.entries(allPlayers).filter(([id]) => id !== playerId)
+  const totalPlayers = 1 + opponents.length
   const activeRow = gameOver ? -1 : myGuesses.length
-  const bothDone = gameOver && oppDone
+  const anyOppDone = opponents.some(([, p]) => p.done)
+  const allDone = gameOver && opponents.every(([, p]) => p.done)
+
+  // Verdict when everyone is done
+  let verdict = null
+  if (allDone) {
+    const entries = [
+      { label: 'You', won, count: myGuesses.length },
+      ...opponents.map(([, p], i) => ({ label: `Opponent ${i + 1}`, won: p.won, count: p.guesses.length })),
+    ]
+    const winners = entries.filter(e => e.won)
+    if (winners.length === 0) {
+      verdict = '🤝 Nobody got it!'
+    } else {
+      const best = Math.min(...winners.map(e => e.count))
+      const top = winners.filter(e => e.count === best)
+      if (top.length > 1) verdict = '🤝 Tie!'
+      else if (top[0].label === 'You') verdict = winners.length === 1 ? '🏆 You win!' : '🏆 You win by fewer guesses!'
+      else verdict = `😔 ${top[0].label} wins!`
+    }
+  }
+
+  // Share text for all players
+  function buildShareText() {
+    function section(label, guesses, isWon) {
+      const score = isWon ? guesses.length : 'X'
+      const rows = guesses.map(({ clues }) =>
+        decodeClues(clues).map(c => c === 'correct' ? '🟩' : c === 'present' ? '🟨' : '⬛').join('')
+      ).join('\n')
+      return `── ${label} (${score}/${MAX_GUESSES}) ──\n${rows}`
+    }
+    const anyWon = won || opponents.some(([, p]) => p.won)
+    const parts = [
+      'Number Wordle [Compete]',
+      section('You', myGuesses, won),
+      ...opponents.map(([, p], i) => section(`Opponent ${i + 1}`, p.guesses, p.won)),
+    ]
+    return parts.join('\n\n') + (!anyWon ? `\n\nAnswer: ${secret}` : '')
+  }
+
+  // Grid column count: 2 players→2 cols, 3→3 cols, 4→2×2
+  const cols = totalPlayers <= 2 ? 2 : totalPlayers === 3 ? 3 : 2
 
   if (!secret) {
     return <div className="game"><p className="loading-msg">Loading game room…</p></div>
-  }
-
-  // Decode my guesses for share text (need full clue arrays)
-  const myGuessesDecoded = myGuesses.map(g => ({
-    guess: g.guess,
-    clues: decodeClues(g.clues),
-  }))
-
-  let verdict = null
-  if (bothDone) {
-    if (won && !oppWon) verdict = '🏆 You win!'
-    else if (!won && oppWon) verdict = '😔 Opponent wins!'
-    else if (won && oppWon)
-      verdict = myGuesses.length < oppGuesses.length ? '🏆 You win by fewer guesses!'
-              : myGuesses.length > oppGuesses.length ? '😔 Opponent wins by fewer guesses!'
-              : '🤝 Tie game!'
-    else verdict = '🤝 Neither player got it!'
   }
 
   return (
@@ -177,7 +211,11 @@ export default function CompeteBoard({ roomId, role, onRestart }) {
         </div>
       )}
 
-      <div className={`compete-layout${gameOver ? '' : ' single'}`}>
+      <div
+        className="compete-layout"
+        data-players={totalPlayers}
+        style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+      >
         <PlayerGrid
           label="You"
           isYours={true}
@@ -185,36 +223,39 @@ export default function CompeteBoard({ roomId, role, onRestart }) {
           currentInput={currentInput}
           activeRow={activeRow}
         />
-        {gameOver && (
+        {opponents.map(([id, p], i) => (
           <PlayerGrid
-            label="Opponent"
+            key={id}
+            label={opponents.length === 1 ? 'Opponent' : `Opponent ${i + 1}`}
             isYours={false}
-            guesses={oppGuesses}
+            guesses={p.guesses}
             currentInput=""
             activeRow={-1}
           />
-        )}
+        ))}
       </div>
 
       {!gameOver && <Keypad onKey={handleKey} />}
 
       {error && <p className="error">{error}</p>}
 
-      {(gameOver || oppDone) && (
+      {(gameOver || anyOppDone) && (
         <div className="game-over">
           {gameOver && (won
             ? <p className="win-msg">You got it in {myGuesses.length}! 🎉</p>
             : <p className="lose-msg">You didn't get it — the number was <strong>{secret}</strong></p>
           )}
-          {oppDone && (oppWon
-            ? <p className="opp-result opp-won">Opponent got it in {oppGuesses.length}! ⚡</p>
-            : <p className="opp-result opp-lost">Opponent didn't get it either</p>
-          )}
+          {opponents.map(([id, p], i) => p.done && (
+            <p key={id} className={`opp-result ${p.won ? 'opp-won' : 'opp-lost'}`}>
+              {opponents.length === 1 ? 'Opponent' : `Opponent ${i + 1}`}
+              {p.won ? ` got it in ${p.guesses.length}! ⚡` : ` didn't get it`}
+            </p>
+          ))}
           {verdict && <p className="verdict">{verdict}</p>}
           {!gameOver && <p className="waiting-for-you">Finish your game to see the final result!</p>}
           {gameOver && (
             <div className="game-over-actions">
-              <button className="share-btn" onClick={() => copyText(buildShareText(myGuessesDecoded, won, secret, 'compete'))}>
+              <button className="share-btn" onClick={() => copyText(buildShareText())}>
                 {copied ? '✓ Copied!' : '📋 Share Result'}
               </button>
               <button className="restart-btn" onClick={onRestart}>Play Again</button>

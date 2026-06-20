@@ -439,29 +439,24 @@
 
 .compete-layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
   width: 100%;
-  max-width: 780px;
+  max-width: 1000px;
+}
+
+/* 3-4 player layouts need smaller cells to fit */
+.compete-layout[data-players="3"] .cell,
+.compete-layout[data-players="4"] .cell {
+  width: 38px;
+  height: 38px;
+  font-size: 1.1rem;
 }
 
 @media (max-width: 680px) {
   .compete-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
     gap: 1rem;
   }
-}
-
-.compete-layout.single {
-  grid-template-columns: 1fr;
-  max-width: 380px;
-  justify-items: center;
-}
-
-.compete-layout.single .cell {
-  width: 52px;
-  height: 52px;
-  font-size: 1.5rem;
 }
 
 .compete-panel {
