@@ -37,7 +37,7 @@ export async function createRoom(roomId, encodedSecret) {
 export async function joinRoom(roomId) {
   const snap = await get(ref(getDb(), `games/${roomId}/players`))
   const existing = snap.val() || {}
-  if (Object.keys(existing).length >= 4) return null  // room full
+  if (Object.keys(existing).length >= 15) return null  // room full
   const playerId = 'g_' + Math.random().toString(36).slice(2, 8)
   await set(ref(getDb(), `games/${roomId}/players/${playerId}`), { done: false, won: false })
   return playerId

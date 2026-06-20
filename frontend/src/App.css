@@ -458,9 +458,8 @@
   justify-items: center;
 }
 
-/* 3-4 player layouts need smaller cells to fit */
-.compete-layout[data-players="3"] .cell,
-.compete-layout[data-players="4"] .cell {
+/* 3+ player layouts need smaller cells to fit */
+.compete-compact .cell {
   width: 38px;
   height: 38px;
   font-size: 1.1rem;

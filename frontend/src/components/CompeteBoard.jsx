@@ -182,8 +182,8 @@ export default function CompeteBoard({ roomId, playerId, onRestart }) {
     return parts.join('\n\n') + (!anyWon ? `\n\nAnswer: ${secret}` : '')
   }
 
-  // Grid column count: 1→centred single, 2→2 cols, 3→3 cols, 4→2×2
-  const cols = totalPlayers <= 1 ? 1 : totalPlayers === 2 ? 2 : totalPlayers === 3 ? 3 : 2
+  // Grid column count: 1→centred, 2→2, 3→3, 4+→4 (rows fill naturally)
+  const cols = totalPlayers <= 1 ? 1 : Math.min(totalPlayers, 4)
 
   if (!secret) {
     return <div className="game"><p className="loading-msg">Loading game room…</p></div>
@@ -212,7 +212,7 @@ export default function CompeteBoard({ roomId, playerId, onRestart }) {
       )}
 
       <div
-        className="compete-layout"
+        className={`compete-layout${cols >= 3 ? ' compete-compact' : ''}`}
         data-players={totalPlayers}
         style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
       >
