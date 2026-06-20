@@ -1,6 +1,36 @@
 export const DIGITS = 6
 export const MAX_GUESSES = 6
 
+export function generateRoomId() {
+  const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  const first = letters[Math.floor(Math.random() * letters.length)]
+  const rest = Array.from({ length: 5 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+  return first + rest
+}
+
+export function encodeSecret(secret) {
+  return btoa(secret)
+}
+
+export function decodeSecret(encoded) {
+  try {
+    const decoded = atob(encoded)
+    return /^\d{6}$/.test(decoded) ? decoded : null
+  } catch {
+    return null
+  }
+}
+
+export function encodeClues(clues) {
+  return clues.map(c => c === 'correct' ? 'C' : c === 'present' ? 'P' : 'A').join('')
+}
+
+export function decodeClues(str) {
+  if (!str) return Array(DIGITS).fill('absent')
+  return str.split('').map(c => c === 'C' ? 'correct' : c === 'P' ? 'present' : 'absent')
+}
+
 export function generateSecret() {
   const digits = [String(Math.floor(Math.random() * 9) + 1)]
   for (let i = 1; i < DIGITS; i++) {

@@ -1,4 +1,12 @@
-export default function ModeSelect({ onSelect, isInvite }) {
+export default function ModeSelect({ onSelect, isInvite, loading }) {
+  if (loading) {
+    return (
+      <div className="mode-select">
+        <h1>Number Wordle</h1>
+        <p className="mode-subtitle">Creating game room…</p>
+      </div>
+    )
+  }
   if (isInvite) {
     return (
       <div className="mode-select">

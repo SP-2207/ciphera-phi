@@ -27,8 +27,8 @@ function Row({ guess, clues, isActive, currentInput }) {
   )
 }
 
-export default function GameBoard({ mode, competSecret, onRestart }) {
-  const [secret] = useState(() => competSecret || generateSecret())
+export default function GameBoard({ mode, onRestart }) {
+  const [secret] = useState(generateSecret)
   const [guesses, setGuesses] = useState([])
   const [currentInput, setCurrentInput] = useState('')
   const [gameOver, setGameOver] = useState(false)
@@ -36,11 +36,9 @@ export default function GameBoard({ mode, competSecret, onRestart }) {
   const [error, setError] = useState('')
   const [showInfo, setShowInfo] = useState(false)
   const [timerKey, setTimerKey] = useState(0)
-  const [shareLink, setShareLink] = useState('')
   const [copied, setCopied] = useState(false)
   const [autoNotice, setAutoNotice] = useState(false)
 
-  // Refs to avoid stale closures in timer/keyboard callbacks
   const guessesRef = useRef([])
   const gameOverRef = useRef(false)
   const lastSubmittedRef = useRef('')
@@ -55,31 +53,17 @@ export default function GameBoard({ mode, competSecret, onRestart }) {
       if (gameOverRef.current) return
       if (e.key >= '0' && e.key <= '9') {
         if (currentInputRef.current.length < DIGITS) {
-          setCurrentInput(v => v + e.key)
-          setError('')
+          setCurrentInput(v => v + e.key); setError('')
         }
       } else if (e.key === 'Backspace') {
-        setCurrentInput(v => v.slice(0, -1))
-        setError('')
+        setCurrentInput(v => v.slice(0, -1)); setError('')
       } else if (e.key === 'Enter') {
         const inp = currentInputRef.current
-        if (inp.length === DIGITS) {
-          doSubmit(inp)
-        } else {
-          setError(`Enter all ${DIGITS} digits first`)
-        }
+        inp.length === DIGITS ? doSubmit(inp) : setError(`Enter all ${DIGITS} digits first`)
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, []) // refs keep this fresh without re-subscribing
-
-  useEffect(() => {
-    if (mode === 'compete') {
-      const link = `${window.location.origin}${window.location.pathname}#compete/${secret}`
-      setShareLink(link)
-      window.location.hash = `compete/${secret}`
-    }
   }, [])
 
   function doSubmit(g) {
@@ -92,14 +76,8 @@ export default function GameBoard({ mode, competSecret, onRestart }) {
     setCurrentInput('')
     setError('')
     setTimerKey(k => k + 1)
-    if (g === secret) {
-      setWon(true)
-      setGameOver(true)
-      gameOverRef.current = true
-    } else if (next.length >= MAX_GUESSES) {
-      setGameOver(true)
-      gameOverRef.current = true
-    }
+    if (g === secret) { setWon(true); setGameOver(true); gameOverRef.current = true }
+    else if (next.length >= MAX_GUESSES) { setGameOver(true); gameOverRef.current = true }
   }
 
   function handleTimerExpire() {
@@ -118,27 +96,16 @@ export default function GameBoard({ mode, competSecret, onRestart }) {
   function handleKey(key) {
     if (gameOver) return
     setError('')
-    if (key === '⌫') {
-      setCurrentInput(v => v.slice(0, -1))
-    } else if (key === '✓') {
-      if (currentInput.length !== DIGITS) {
-        setError(`Enter all ${DIGITS} digits first`)
-        return
-      }
-      doSubmit(currentInput)
+    if (key === '⌫') setCurrentInput(v => v.slice(0, -1))
+    else if (key === '✓') {
+      currentInput.length === DIGITS ? doSubmit(currentInput) : setError(`Enter all ${DIGITS} digits first`)
     } else if (currentInput.length < DIGITS) {
       setCurrentInput(v => v + key)
     }
   }
 
   async function copyToClipboard(text) {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      /* clipboard not available */
-    }
+    try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch {}
   }
 
   const activeRow = gameOver ? -1 : guesses.length
@@ -152,40 +119,21 @@ export default function GameBoard({ mode, competSecret, onRestart }) {
         <h1>Number Wordle</h1>
         <div className="header-right">
           <span className={`mode-badge ${mode}`}>{mode}</span>
-          <button className="icon-btn info-btn" onClick={() => setShowInfo(true)} title="How to play">
-            ?
-          </button>
+          <button className="icon-btn info-btn" onClick={() => setShowInfo(true)} title="How to play">?</button>
         </div>
       </div>
 
-      {mode === 'compete' && shareLink && !gameOver && (
-        <div className="share-banner">
-          <span>Invite a friend to this puzzle:</span>
-          <button className="copy-link-btn" onClick={() => copyToClipboard(shareLink)}>
-            {copied ? '✓ Copied!' : '🔗 Copy Link'}
-          </button>
-        </div>
-      )}
-
       {mode === 'timed' && !gameOver && (
-        <Timer duration={15} onExpire={handleTimerExpire} resetKey={timerKey} />
+        <Timer duration={20} onExpire={handleTimerExpire} resetKey={timerKey} />
       )}
 
-      {autoNotice && (
-        <div className="auto-notice">⏱ Previous guess auto-submitted!</div>
-      )}
+      {autoNotice && <div className="auto-notice">⏱ Previous guess auto-submitted!</div>}
 
       <div className="grid">
         {Array.from({ length: MAX_GUESSES }, (_, i) => {
           const g = guesses[i]
           return (
-            <Row
-              key={i}
-              guess={g?.guess}
-              clues={g?.clues}
-              isActive={i === activeRow}
-              currentInput={currentInput}
-            />
+            <Row key={i} guess={g?.guess} clues={g?.clues} isActive={i === activeRow} currentInput={currentInput} />
           )
         })}
       </div>
@@ -201,21 +149,11 @@ export default function GameBoard({ mode, competSecret, onRestart }) {
             : <p className="lose-msg">The number was <strong>{secret}</strong></p>
           }
           <div className="game-over-actions">
-            <button
-              className="share-btn"
-              onClick={() => copyToClipboard(buildShareText(guesses, won, secret, mode))}
-            >
+            <button className="share-btn" onClick={() => copyToClipboard(buildShareText(guesses, won, secret, mode))}>
               {copied ? '✓ Copied!' : '📋 Share Result'}
             </button>
-            <button className="restart-btn" onClick={onRestart}>
-              Play Again
-            </button>
+            <button className="restart-btn" onClick={onRestart}>Play Again</button>
           </div>
-          {mode === 'compete' && (
-            <p className="compete-note">
-              Share your result with your opponent to compare scores!
-            </p>
-          )}
         </div>
       )}
 

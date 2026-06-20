@@ -52,7 +52,7 @@ export default function InfoModal({ onClose }) {
             </div>
             <div className="mode-info-row">
               <span className="mode-badge timed">Timed</span>
-              <span>15 s per guess. Time up? Previous guess is auto-submitted!</span>
+              <span>20 s per guess. Time up? Previous guess is auto-submitted!</span>
             </div>
             <div className="mode-info-row">
               <span className="mode-badge compete">Compete</span>
