@@ -9,8 +9,11 @@
     "lint": "eslint .",
     "preview": "vite preview"
   },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
-    "firebase": "^12.15.0",
+    "firebase": "^10.14.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },
