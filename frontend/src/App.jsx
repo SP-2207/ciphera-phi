@@ -36,7 +36,14 @@ export default function App() {
         setCreating(true)
         const id = generateRoomId()
         const encoded = encodeSecret(generateSecret())
-        await createRoom(id, encoded)
+        try {
+          await createRoom(id, encoded)
+        } catch (err) {
+          console.error('Firebase createRoom failed:', err)
+          setCreating(false)
+          alert('Could not create game room. Check Firebase setup in Vercel env vars.')
+          return
+        }
         setRoomId(id)
         setRole('host')
         setCreating(false)

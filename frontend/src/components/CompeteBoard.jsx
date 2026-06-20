@@ -19,7 +19,7 @@ function PlayerGrid({ label, isYours, guesses, currentInput, activeRow }) {
           const display = active
             ? currentInput.padEnd(DIGITS, ' ')
             : (g?.guess || '').padEnd(DIGITS, ' ')
-          const clues = active ? Array(DIGITS).fill('') : decodeClues(g?.clues || '')
+          const clues = (active || !g) ? Array(DIGITS).fill('') : decodeClues(g.clues || '')
           return (
             <div key={i} className="row">
               {Array.from({ length: DIGITS }, (_, j) => (

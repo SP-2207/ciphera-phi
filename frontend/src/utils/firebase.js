@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app'
+import { initializeApp, getApps, getApp } from 'firebase/app'
 import { getDatabase, ref, set, update, onValue } from 'firebase/database'
 
 const firebaseConfig = {
@@ -18,18 +18,20 @@ export function isFirebaseConfigured() {
 let db = null
 function getDb() {
   if (!db) {
-    const app = initializeApp(firebaseConfig)
+    // Avoid "app already exists" error from React strict mode double-invoke
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
     db = getDatabase(app)
   }
   return db
 }
 
 export async function createRoom(roomId, encodedSecret) {
+  // Firebase drops empty arrays, so use null as placeholder instead
   await set(ref(getDb(), `games/${roomId}`), {
     secret: encodedSecret,
     createdAt: Date.now(),
-    host:  { guesses: [], clues: [], done: false, won: false },
-    guest: { guesses: [], clues: [], done: false, won: false },
+    host:  { done: false, won: false },
+    guest: { done: false, won: false },
   })
 }
 
@@ -48,11 +50,10 @@ function toArray(val) {
 
 export function parsePlayerData(data) {
   if (!data) return { guesses: [], done: false, won: false }
+  const guesses = toArray(data.guesses)
+  const clues = toArray(data.clues)
   return {
-    guesses: toArray(data.guesses).map((g, i) => ({
-      guess: g,
-      clues: toArray(data.clues)[i] || '',
-    })),
+    guesses: guesses.map((g, i) => ({ guess: g, clues: clues[i] || '' })),
     done: !!data.done,
     won: !!data.won,
   }
