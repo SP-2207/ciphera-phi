@@ -32,7 +32,7 @@ export default function BookFlip({
     setDisplay(Math.floor(Math.random() * maxPages) + 1)
 
     let count = 0
-    const total = 22 + Math.floor(Math.random() * 8)
+    const total = 13 + Math.floor(Math.random() * 5)
 
     function tick(delay) {
       timerRef.current = setTimeout(() => {
@@ -42,18 +42,18 @@ export default function BookFlip({
           pageKeyRef.current++
           setPageKey(pageKeyRef.current)
           setPhase('settled')
-          timerRef.current = setTimeout(() => onResult(finalRef.current), 700)
+          timerRef.current = setTimeout(() => onResult(finalRef.current), 500)
         } else {
           setDisplay(Math.floor(Math.random() * maxPages) + 1)
           pageKeyRef.current++
           setPageKey(pageKeyRef.current)
-          const next = count < total * 0.55 ? delay : Math.min(delay + 22, 320)
+          const next = count < total * 0.55 ? delay : Math.min(delay + 20, 260)
           tick(next)
         }
       }, delay)
     }
 
-    tick(45)
+    tick(32)
   }
 
   function skip() {

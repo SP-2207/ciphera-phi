@@ -1,17 +1,34 @@
+import { useState } from 'react'
+import InfoModal from './InfoModal'
+
 export default function ModeSelect({ onSelect, isInvite, loading, onHome }) {
+  const [showInfo, setShowInfo] = useState(false)
+
   if (loading) {
     return (
-      <div className="mode-select">
-        <h1>Ciphera</h1>
-        <p className="mode-subtitle">Creating game room…</p>
+      <div className="game">
+        <div className="header">
+          <div className="header-left" />
+          <h1>Ciphera</h1>
+          <div className="header-right" />
+        </div>
+        <p className="loading-msg">Creating game room…</p>
       </div>
     )
   }
+
   if (isInvite) {
     return (
-      <div className="mode-select">
-        {onHome && <button className="hub-back-btn" onClick={onHome}>← Games</button>}
-        <h1>Ciphera</h1>
+      <div className="game">
+        <div className="header">
+          <div className="header-left">
+            {onHome && <button className="icon-btn" onClick={onHome} title="Back to games">←</button>}
+          </div>
+          <h1>Ciphera</h1>
+          <div className="header-right">
+            <button className="icon-btn" onClick={() => setShowInfo(true)} title="How to play">?</button>
+          </div>
+        </div>
         <div className="invite-card">
           <div className="invite-icon">⚔️</div>
           <h2>You've been challenged!</h2>
@@ -20,14 +37,23 @@ export default function ModeSelect({ onSelect, isInvite, loading, onHome }) {
             Accept Challenge
           </button>
         </div>
+        {showInfo && <InfoModal onClose={() => setShowInfo(false)} />}
       </div>
     )
   }
 
   return (
-    <div className="mode-select">
-      {onHome && <button className="hub-back-btn" onClick={onHome}>← Games</button>}
-      <h1>Ciphera</h1>
+    <div className="game">
+      <div className="header">
+        <div className="header-left">
+          {onHome && <button className="icon-btn" onClick={onHome} title="Back to games">←</button>}
+        </div>
+        <h1>Ciphera</h1>
+        <div className="header-right">
+          <button className="icon-btn" onClick={() => setShowInfo(true)} title="How to play">?</button>
+        </div>
+      </div>
+
       <p className="mode-subtitle">Choose your game mode</p>
       <div className="mode-cards">
         <button className="mode-card" onClick={() => onSelect('classic')}>
@@ -52,6 +78,8 @@ export default function ModeSelect({ onSelect, isInvite, loading, onHome }) {
           </span>
         </button>
       </div>
+
+      {showInfo && <InfoModal onClose={() => setShowInfo(false)} />}
     </div>
   )
 }
