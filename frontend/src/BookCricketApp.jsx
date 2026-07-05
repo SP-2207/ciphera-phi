@@ -16,30 +16,36 @@ function genRoomId() {
 
 // Screens: 'home' | 'setup' | 'joining' | 'lobby' | 'game' | 'result'
 export default function BookCricketApp({ onHome }) {
-  const [screen,    setScreen]    = useState('home')
-  const [opponent,  setOpponent]  = useState(null)   // 'computer' | 'friend'
-  const [format,    setFormat]    = useState(null)   // 'limited' | 'test'
-  const [overs,     setOvers]     = useState(0)
-  const [roomId,    setRoomId]    = useState(null)
-  const [playerId,  setPlayerId]  = useState(null)
-  const [isHost,    setIsHost]    = useState(false)
-  const [myNames,   setMyNames]   = useState([])
-  const [result,    setResult]    = useState(null)
-  const [joinError, setJoinError] = useState('')
-
-  // Filled when the URL already contains a room ID (#book-cricket/ROOMID)
+  const [screen,       setScreen]       = useState('home')
+  const [opponent,     setOpponent]     = useState(null)
+  const [format,       setFormat]       = useState(null)
+  const [overs,        setOvers]        = useState(0)
+  const [batsmanOvers, setBatsmanOvers] = useState(0)
+  const [batsmanCount, setBatsmanCount] = useState(4)
+  const [roomId,       setRoomId]       = useState(null)
+  const [playerId,     setPlayerId]     = useState(null)
+  const [isHost,       setIsHost]       = useState(false)
+  const [myNames,      setMyNames]      = useState([])
+  const [result,       setResult]       = useState(null)
+  const [joinError,    setJoinError]    = useState('')
   const [inviteRoomId, setInviteRoomId] = useState(null)
+  const [guestBatCount, setGuestBatCount] = useState(4)  // pre-fetched for guest invite
 
-  // Detect invite URL on mount
+  // Detect invite URL on mount: #book-cricket/ROOMID
   useEffect(() => {
     const hash = window.location.hash.slice(1)
     const m    = hash.match(/^book-cricket\/([A-Z][A-Z0-9]{5})$/)
     if (m) {
-      setInviteRoomId(m[1])
+      const rid = m[1]
+      setInviteRoomId(rid)
       setOpponent('friend')
       setIsHost(false)
-      setRoomId(m[1])
-      setScreen('setup')      // guest lands on invite-accept screen
+      setRoomId(rid)
+      // Pre-fetch room to show correct batsman count in name inputs
+      getBCRoom(rid).then(room => {
+        if (room?.batsmanCount) setGuestBatCount(room.batsmanCount)
+      }).catch(() => {})
+      setScreen('setup')
     }
   }, [])
 
@@ -49,43 +55,36 @@ export default function BookCricketApp({ onHome }) {
     setScreen('setup')
   }
 
-  // ── BCSetup ──────────────────────────────────────────
-  async function handleStart(fmt, ovs, names = []) {
+  // ── BCSetup → handleStart(format, overs, batsmanOvers, names, batsmanCount) ──
+  async function handleStart(fmt, ovs, batOvs, names = [], count = 4) {
     setMyNames(names)
+    setBatsmanCount(count)
+    setJoinError('')
 
-    // vs Computer — go straight to game
     if (opponent === 'computer') {
       setFormat(fmt)
       setOvers(ovs)
+      setBatsmanOvers(batOvs)
       setPlayerId('local')
       setIsHost(true)
       setScreen('game')
       return
     }
 
-    setJoinError('')
-
     if (inviteRoomId) {
-      // ── GUEST: join existing room ──────────────────
+      // ── GUEST ──────────────────────────────────────
       setScreen('joining')
       try {
         const room = await getBCRoom(inviteRoomId)
-        if (!room) {
-          setJoinError('Room not found. Ask your friend to create a new invite.')
-          setScreen('setup')
-          return
-        }
+        if (!room) { setJoinError('Room not found. Ask your friend to create a new invite.'); setScreen('setup'); return }
         const guestId = await joinBCRoom(inviteRoomId)
-        if (!guestId) {
-          setJoinError('Room is full or already started.')
-          setScreen('setup')
-          return
-        }
+        if (!guestId) { setJoinError('Room is full or already started.'); setScreen('setup'); return }
         setFormat(room.format)
-        setOvers(room.overs || 0)
+        setOvers(room.overs        || 0)
+        setBatsmanOvers(room.batsmanOvers || 0)
+        setBatsmanCount(room.batsmanCount || count)
         setPlayerId(guestId)
         setIsHost(false)
-        // Keep hash unchanged — we're already at #book-cricket/ROOMID
         setScreen('game')
       } catch (err) {
         console.error(err)
@@ -93,18 +92,19 @@ export default function BookCricketApp({ onHome }) {
         setScreen('setup')
       }
     } else {
-      // ── HOST: create room, show lobby with share link ──
+      // ── HOST ───────────────────────────────────────
       setScreen('joining')
       try {
         const id = genRoomId()
-        await createBCRoom(id, fmt, ovs)
+        await createBCRoom(id, fmt, ovs, batOvs, count)
         setRoomId(id)
         setFormat(fmt)
         setOvers(ovs)
+        setBatsmanOvers(batOvs)
         setPlayerId('host')
         setIsHost(true)
         window.location.hash = `book-cricket/${id}`
-        setScreen('lobby')   // ← show lobby with share link, wait for guest
+        setScreen('lobby')
       } catch (err) {
         console.error(err)
         setJoinError('Could not create room. Check your connection and try again.')
@@ -113,51 +113,37 @@ export default function BookCricketApp({ onHome }) {
     }
   }
 
-  // ── BCLobby: opponent joined → start ────────────────
-  function handleOpponentJoined() {
-    setScreen('game')
-  }
+  function handleOpponentJoined() { setScreen('game') }
 
-  // ── BCGame callback ──────────────────────────────────
   function handleGameOver(myTeam, oppTeam) {
     setResult({ myTeam, oppTeam })
     setScreen('result')
     window.location.hash = 'book-cricket'
   }
 
-  // ── BCResult: play again ─────────────────────────────
   function handlePlayAgain() {
-    setResult(null)
-    setRoomId(null)
-    setPlayerId(null)
-    setInviteRoomId(null)
-    setFormat(null)
-    setOvers(0)
-    setMyNames([])
-    setJoinError('')
+    setResult(null); setRoomId(null); setPlayerId(null)
+    setInviteRoomId(null); setFormat(null); setOvers(0)
+    setBatsmanOvers(0); setBatsmanCount(4); setMyNames([]); setJoinError('')
     window.location.hash = 'book-cricket'
     setScreen('home')
   }
 
-  // ── Back to home (from setup or lobby) ───────────────
   function handleBack() {
     window.location.hash = 'book-cricket'
-    setInviteRoomId(null)
-    setOpponent(null)
-    setJoinError('')
+    setInviteRoomId(null); setOpponent(null); setJoinError('')
     setScreen('home')
   }
 
   // ── Render ───────────────────────────────────────────
-  if (screen === 'home') {
-    return <BCHome onSelect={handleSelectOpponent} onHome={onHome} />
-  }
+  if (screen === 'home') return <BCHome onSelect={handleSelectOpponent} onHome={onHome} />
 
   if (screen === 'setup') {
     return (
       <BCSetup
         isInvite={!!inviteRoomId}
         joinError={joinError}
+        guestBatsmanCount={guestBatCount}
         onStart={handleStart}
         onBack={handleBack}
       />
@@ -167,11 +153,7 @@ export default function BookCricketApp({ onHome }) {
   if (screen === 'joining') {
     return (
       <div className="game">
-        <div className="header">
-          <div className="header-left" />
-          <h1>Book Cricket</h1>
-          <div className="header-right" />
-        </div>
+        <div className="header"><div className="header-left" /><h1>Book Cricket</h1><div className="header-right" /></div>
         <p className="loading-msg">Setting up room…</p>
       </div>
     )
@@ -183,6 +165,7 @@ export default function BookCricketApp({ onHome }) {
         roomId={roomId}
         format={format}
         overs={overs}
+        batsmanOvers={batsmanOvers}
         onOpponentJoined={handleOpponentJoined}
         onHome={onHome}
       />
@@ -194,6 +177,8 @@ export default function BookCricketApp({ onHome }) {
       <BCGame
         format={format}
         overs={overs}
+        batsmanOvers={batsmanOvers}
+        batsmanCount={batsmanCount}
         opponent={opponent}
         roomId={roomId}
         playerId={playerId}
@@ -213,6 +198,7 @@ export default function BookCricketApp({ onHome }) {
         opponent={opponent}
         format={format}
         overs={overs}
+        batsmanOvers={batsmanOvers}
         onPlayAgain={handlePlayAgain}
         onHome={onHome}
       />

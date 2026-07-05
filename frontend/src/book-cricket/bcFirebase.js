@@ -26,15 +26,16 @@ function getDb() {
 }
 
 // Rooms live under games/ so existing Firebase rules (which cover games/) apply.
-// Prefix "bc_" distinguishes Book Cricket rooms from Ciphera rooms.
 function roomPath(roomId) {
   return `games/bc_${roomId}`
 }
 
-export async function createBCRoom(roomId, format, overs) {
+export async function createBCRoom(roomId, format, overs, batsmanOvers, batsmanCount) {
   await set(ref(getDb(), roomPath(roomId)), {
     format,
-    overs: overs || 0,
+    overs:        overs        || 0,
+    batsmanOvers: batsmanOvers || 0,
+    batsmanCount: batsmanCount || MAX_BATSMEN,
     createdAt: Date.now(),
     players: {
       host: { totalBalls: 0, totalRuns: 0, wickets: 0, currentBatsman: 0, done: false },
@@ -50,7 +51,7 @@ export async function getBCRoom(roomId) {
 export async function joinBCRoom(roomId) {
   const snap = await get(ref(getDb(), `${roomPath(roomId)}/players`))
   const existing = snap.val() || {}
-  if (Object.keys(existing).length >= 2) return null   // max 2 players
+  if (Object.keys(existing).length >= 2) return null
   const playerId = 'g_' + Math.random().toString(36).slice(2, 8)
   await set(ref(getDb(), `${roomPath(roomId)}/players/${playerId}`), {
     totalBalls: 0, totalRuns: 0, wickets: 0, currentBatsman: 0, done: false,
@@ -82,8 +83,11 @@ function toArr(val, fallback) {
 
 export function parseBCPlayer(data) {
   if (!data) return null
+  const count = data.batsmen
+    ? (Array.isArray(data.batsmen) ? data.batsmen.length : Object.keys(data.batsmen).length)
+    : MAX_BATSMEN
   return {
-    batsmen:        toArr(data.batsmen, Array.from({ length: MAX_BATSMEN }, (_, i) => ({ name: `Bat ${i + 1}`, runs: 0, balls: 0, out: false }))),
+    batsmen:        toArr(data.batsmen, Array.from({ length: count }, (_, i) => ({ name: `Bat ${i + 1}`, runs: 0, balls: 0, out: false }))),
     currentBatsman: data.currentBatsman ?? 0,
     totalRuns:      data.totalRuns      ?? 0,
     totalBalls:     data.totalBalls     ?? 0,

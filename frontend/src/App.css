@@ -1094,8 +1094,11 @@
   opacity: 0.55;
 }
 
+.bc-runs-neg { color: #e74c3c; }
+
 .bc-bat-name {
   min-width: 38px;
+  flex: 1;
 }
 
 .bc-bat-score {
@@ -1148,9 +1151,12 @@
   font-weight: 700;
 }
 
-.bc-ball--run  { background: #538d4e; color: #fff; }
-.bc-ball--dot  { background: #3a3a3c; color: #818384; }
-.bc-ball--out  { background: #c0392b; color: #fff; }
+.bc-ball--run     { background: #538d4e; color: #fff; }
+.bc-ball--dot     { background: #3a3a3c; color: #818384; }
+.bc-ball--out     { background: #c0392b; color: #fff; }
+.bc-ball--nb      { background: #e67e22; color: #fff; font-size: 0.58rem; }
+.bc-ball--wd      { background: #2980b9; color: #fff; font-size: 0.58rem; }
+.bc-ball--penalty { background: #8e1a1a; color: #fff; font-size: 0.6rem; }
 
 .bc-innings-done {
   font-size: 0.75rem;
@@ -1427,6 +1433,60 @@
   width: 100% !important;
   font-size: 0.88rem !important;
   padding: 0.4rem 0.6rem !important;
+}
+
+/* ── Batsman count picker ────────────────────────── */
+
+.bc-count-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 320px;
+}
+
+.bc-count-label {
+  font-size: 0.82rem;
+  color: #818384;
+}
+
+.bc-count-pills {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.bc-count-pill {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid #3a3a3c;
+  background: transparent;
+  color: #ccc;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.bc-count-pill:hover { background: #2a2a2b; border-color: #818384; }
+
+.bc-count-pill--active {
+  background: #538d4e !important;
+  border-color: #538d4e !important;
+  color: #fff !important;
+}
+
+/* ── Lobby share preview ─────────────────────────── */
+
+.bc-share-preview {
+  font-size: 0.82rem;
+  color: #ccc;
+  line-height: 1.55;
+  white-space: pre-line;
+  text-align: left;
+  word-break: break-all;
 }
 
 /* ── BC Result screen ────────────────────────────── */

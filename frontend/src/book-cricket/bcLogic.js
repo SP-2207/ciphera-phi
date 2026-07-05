@@ -1,16 +1,28 @@
 export const MAX_BATSMEN = 4
-export const BOOK_PAGES = 500
+export const BOOK_PAGES  = 500
 
-export function getScore(page) {
+/**
+ * Scoring per last digit of page number.
+ * isBOMode: "Batsman-Overs" format — digit 0 gives -5 (no dismissal) instead of a wicket.
+ */
+export function getScore(page, isBOMode = false) {
   const u = page % 10
-  if (u === 0) return { runs: 0, wicket: true,  dot: false }
-  if (u >= 7)  return { runs: 0, wicket: false, dot: true  }
-  return           { runs: u, wicket: false, dot: false }
+  if (u === 5) return { runs: 1,  extra: true,  extraType: 'nb', wicket: false, dot: false }
+  if (u === 9) return { runs: 1,  extra: true,  extraType: 'wd', wicket: false, dot: false }
+  if (u === 0) {
+    if (isBOMode) return { runs: -5, extra: false, extraType: null, wicket: false, dot: false }
+    return           { runs: 0,  extra: false, extraType: null, wicket: true,  dot: false }
+  }
+  if (u === 7 || u === 8)
+    return { runs: 0, extra: false, extraType: null, wicket: false, dot: true  }
+  return   { runs: u, extra: false, extraType: null, wicket: false, dot: false }
 }
 
-export function newTeamState(names = []) {
+/** Create initial team state. names array, batsman count (2–6). */
+export function newTeamState(names = [], count = MAX_BATSMEN) {
+  const n = Math.max(2, Math.min(6, count || MAX_BATSMEN))
   return {
-    batsmen: Array.from({ length: MAX_BATSMEN }, (_, i) => ({
+    batsmen: Array.from({ length: n }, (_, i) => ({
       name: (names[i] || '').trim() || `Bat ${i + 1}`,
       runs: 0, balls: 0, out: false,
     })),
@@ -18,25 +30,42 @@ export function newTeamState(names = []) {
     totalRuns:      0,
     totalBalls:     0,
     wickets:        0,
-    history:        [],   // [{ page, runs, wicket, dot }, ...]
+    history:        [],
     done:           false,
   }
 }
 
-export function applyFlip(team, page, maxBalls) {
-  const { runs, wicket, dot } = getScore(page)
+/**
+ * Apply one flip to a team state.
+ * maxBalls  – total valid deliveries allowed (Infinity for test / batsman-overs).
+ * batsmanOvers – if non-null, "Batsman-Overs" format: batsman rotates after this many overs.
+ */
+export function applyFlip(team, page, maxBalls, batsmanOvers = null) {
+  const isBOMode = batsmanOvers !== null
+  const { runs, extra, extraType, wicket, dot } = getScore(page, isBOMode)
 
-  const batsmen = team.batsmen.map((b, i) => {
-    if (i !== team.currentBatsman) return b
-    return { ...b, runs: b.runs + runs, balls: b.balls + 1, out: wicket }
-  })
+  const cur = team.batsmen[team.currentBatsman]
+  const updatedBat = {
+    ...cur,
+    runs:  cur.runs  + runs,
+    balls: extra ? cur.balls : cur.balls + 1,
+    out:   wicket,
+  }
 
-  const nextBatsman = wicket ? team.currentBatsman + 1 : team.currentBatsman
-  const totalBalls  = team.totalBalls + 1
-  const totalRuns   = team.totalRuns  + runs
-  const wickets     = team.wickets    + (wicket ? 1 : 0)
-  const allOut      = nextBatsman >= MAX_BATSMEN
-  const oversUp     = totalBalls >= maxBalls
+  // Determine whether the current batsman's innings is over
+  let nextBatsman = team.currentBatsman
+  if (wicket) {
+    nextBatsman = team.currentBatsman + 1
+  } else if (isBOMode && !extra && updatedBat.balls >= batsmanOvers * 6) {
+    nextBatsman = team.currentBatsman + 1   // rotates to next, not "out"
+  }
+
+  const batsmen    = team.batsmen.map((b, i) => i === team.currentBatsman ? updatedBat : b)
+  const totalBalls = extra ? team.totalBalls : team.totalBalls + 1
+  const totalRuns  = team.totalRuns + runs
+  const wickets    = team.wickets   + (wicket ? 1 : 0)
+  const allOut     = nextBatsman >= batsmen.length
+  const oversUp    = totalBalls >= maxBalls
 
   return {
     batsmen,
@@ -44,13 +73,16 @@ export function applyFlip(team, page, maxBalls) {
     totalRuns,
     totalBalls,
     wickets,
-    history: [...team.history, { page, runs, wicket, dot }],
-    done:    allOut || oversUp,
+    history: [...team.history, { page, runs, wicket, dot, extra, extraType }],
+    done: allOut || oversUp,
   }
 }
 
-// Returns 0 (team0's turn) or 1 (team1's turn) or null (both done).
-// Team 0 always bats first each over.
+/**
+ * Returns whose turn it is.
+ * 0 = team-0 (host), 1 = team-1 (guest/computer), null = both done.
+ * Team-0 always bats first each over.
+ */
 export function getActiveTurn(t0, t1) {
   if (t0.done && t1.done) return null
   if (t0.done) return 1
