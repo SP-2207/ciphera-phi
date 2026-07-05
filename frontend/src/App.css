@@ -1165,6 +1165,26 @@
   margin-top: 0.2rem;
 }
 
+/* Extras sub-row */
+.bc-extras-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.15rem 0.25rem;
+  margin-top: 0.25rem;
+  background: rgba(255,255,255,0.04);
+  border-radius: 4px;
+  font-size: 0.78rem;
+}
+.bc-extras-label {
+  color: #818384;
+  font-style: italic;
+}
+.bc-extras-val {
+  font-weight: 600;
+  color: #ccc;
+}
+
 /* ── BC Action area ──────────────────────────────── */
 
 .bc-action {

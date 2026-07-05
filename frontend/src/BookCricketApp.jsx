@@ -6,6 +6,18 @@ import BCGame   from './book-cricket/BCGame'
 import BCResult from './book-cricket/BCResult'
 import { createBCRoom, joinBCRoom, getBCRoom } from './book-cricket/bcFirebase'
 
+const SESSION_KEY = 'bc_active_session'
+
+function saveSession(data) {
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify(data)) } catch (_) {}
+}
+function loadSession() {
+  try { return JSON.parse(localStorage.getItem(SESSION_KEY)) } catch (_) { return null }
+}
+function clearSession() {
+  try { localStorage.removeItem(SESSION_KEY) } catch (_) {}
+}
+
 function genRoomId() {
   const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
   const alnum = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -16,23 +28,42 @@ function genRoomId() {
 
 // Screens: 'home' | 'setup' | 'joining' | 'lobby' | 'game' | 'result'
 export default function BookCricketApp({ onHome }) {
-  const [screen,       setScreen]       = useState('home')
-  const [opponent,     setOpponent]     = useState(null)
-  const [format,       setFormat]       = useState(null)
-  const [overs,        setOvers]        = useState(0)
-  const [batsmanOvers, setBatsmanOvers] = useState(0)
-  const [batsmanCount, setBatsmanCount] = useState(4)
-  const [roomId,       setRoomId]       = useState(null)
-  const [playerId,     setPlayerId]     = useState(null)
-  const [isHost,       setIsHost]       = useState(false)
-  const [myNames,      setMyNames]      = useState([])
-  const [result,       setResult]       = useState(null)
-  const [joinError,    setJoinError]    = useState('')
-  const [inviteRoomId, setInviteRoomId] = useState(null)
-  const [guestBatCount, setGuestBatCount] = useState(4)  // pre-fetched for guest invite
+  const [screen,        setScreen]        = useState('home')
+  const [opponent,      setOpponent]      = useState(null)
+  const [format,        setFormat]        = useState(null)
+  const [overs,         setOvers]         = useState(0)
+  const [batsmanOvers,  setBatsmanOvers]  = useState(0)
+  const [batsmanCount,  setBatsmanCount]  = useState(4)
+  const [roomId,        setRoomId]        = useState(null)
+  const [playerId,      setPlayerId]      = useState(null)
+  const [isHost,        setIsHost]        = useState(false)
+  const [myNames,       setMyNames]       = useState([])
+  const [result,        setResult]        = useState(null)
+  const [joinError,     setJoinError]     = useState('')
+  const [inviteRoomId,  setInviteRoomId]  = useState(null)
+  const [guestBatCount, setGuestBatCount] = useState(4)
 
-  // Detect invite URL on mount: #book-cricket/ROOMID
+  // On mount: restore saved session OR detect invite URL
   useEffect(() => {
+    // 1. Check for an in-progress vs-friend session first
+    const saved = loadSession()
+    if (saved?.roomId && saved?.playerId && saved?.opponent === 'friend') {
+      setOpponent('friend')
+      setFormat(saved.format)
+      setOvers(saved.overs        || 0)
+      setBatsmanOvers(saved.batsmanOvers || 0)
+      setBatsmanCount(saved.batsmanCount || 4)
+      setRoomId(saved.roomId)
+      setPlayerId(saved.playerId)
+      setIsHost(saved.isHost)
+      setMyNames(saved.myNames   || [])
+      // Restore the URL hash so it still looks like the game room
+      window.location.hash = `book-cricket/${saved.roomId}`
+      setScreen('game')
+      return
+    }
+
+    // 2. No saved session — check for invite URL
     const hash = window.location.hash.slice(1)
     const m    = hash.match(/^book-cricket\/([A-Z][A-Z0-9]{5})$/)
     if (m) {
@@ -41,13 +72,12 @@ export default function BookCricketApp({ onHome }) {
       setOpponent('friend')
       setIsHost(false)
       setRoomId(rid)
-      // Pre-fetch room to show correct batsman count in name inputs
       getBCRoom(rid).then(room => {
         if (room?.batsmanCount) setGuestBatCount(room.batsmanCount)
       }).catch(() => {})
       setScreen('setup')
     }
-  }, [])
+  }, []) // eslint-disable-line
 
   // ── BCHome ───────────────────────────────────────────
   function handleSelectOpponent(opp) {
@@ -79,12 +109,21 @@ export default function BookCricketApp({ onHome }) {
         if (!room) { setJoinError('Room not found. Ask your friend to create a new invite.'); setScreen('setup'); return }
         const guestId = await joinBCRoom(inviteRoomId)
         if (!guestId) { setJoinError('Room is full or already started.'); setScreen('setup'); return }
-        setFormat(room.format)
-        setOvers(room.overs        || 0)
-        setBatsmanOvers(room.batsmanOvers || 0)
-        setBatsmanCount(room.batsmanCount || count)
+        const resolvedFmt   = room.format
+        const resolvedOvs   = room.overs        || 0
+        const resolvedBatOvs = room.batsmanOvers || 0
+        const resolvedCount = room.batsmanCount || count
+        setFormat(resolvedFmt)
+        setOvers(resolvedOvs)
+        setBatsmanOvers(resolvedBatOvs)
+        setBatsmanCount(resolvedCount)
         setPlayerId(guestId)
         setIsHost(false)
+        saveSession({
+          opponent: 'friend', roomId: inviteRoomId, playerId: guestId,
+          isHost: false, format: resolvedFmt, overs: resolvedOvs,
+          batsmanOvers: resolvedBatOvs, batsmanCount: resolvedCount, myNames: names,
+        })
         setScreen('game')
       } catch (err) {
         console.error(err)
@@ -113,15 +152,24 @@ export default function BookCricketApp({ onHome }) {
     }
   }
 
-  function handleOpponentJoined() { setScreen('game') }
+  function handleOpponentJoined() {
+    // Host enters game — save session so refresh resumes here
+    saveSession({
+      opponent: 'friend', roomId, playerId: 'host',
+      isHost: true, format, overs, batsmanOvers, batsmanCount, myNames,
+    })
+    setScreen('game')
+  }
 
   function handleGameOver(myTeam, oppTeam) {
+    clearSession()
     setResult({ myTeam, oppTeam })
     setScreen('result')
     window.location.hash = 'book-cricket'
   }
 
   function handlePlayAgain() {
+    clearSession()
     setResult(null); setRoomId(null); setPlayerId(null)
     setInviteRoomId(null); setFormat(null); setOvers(0)
     setBatsmanOvers(0); setBatsmanCount(4); setMyNames([]); setJoinError('')
@@ -130,6 +178,7 @@ export default function BookCricketApp({ onHome }) {
   }
 
   function handleBack() {
+    clearSession()
     window.location.hash = 'book-cricket'
     setInviteRoomId(null); setOpponent(null); setJoinError('')
     setScreen('home')

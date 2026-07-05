@@ -71,6 +71,8 @@ export async function pushBCState(roomId, playerId, team) {
     currentBatsman: team.currentBatsman,
     done:           team.done,
     batsmen:        team.batsmen,
+    nbRuns:         team.nbRuns || 0,
+    wdRuns:         team.wdRuns || 0,
   }
   if (team.history.length > 0) data.history = team.history
   await update(ref(getDb(), `${roomPath(roomId)}/players/${playerId}`), data)
@@ -93,6 +95,8 @@ export function parseBCPlayer(data) {
     totalBalls:     data.totalBalls     ?? 0,
     wickets:        data.wickets        ?? 0,
     history:        toArr(data.history, []),
+    nbRuns:         data.nbRuns ?? 0,
+    wdRuns:         data.wdRuns ?? 0,
     done:           !!data.done,
   }
 }
