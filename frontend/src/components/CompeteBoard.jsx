@@ -40,7 +40,7 @@ function PlayerGrid({ label, isYours, guesses, currentInput, activeRow }) {
   )
 }
 
-export default function CompeteBoard({ roomId, playerId, onRestart }) {
+export default function CompeteBoard({ roomId, playerId, onRestart, onHome }) {
   const [secret, setSecret] = useState(null)
   const [myGuesses, setMyGuesses] = useState([])
   const [allPlayers, setAllPlayers] = useState({})
@@ -259,6 +259,7 @@ export default function CompeteBoard({ roomId, playerId, onRestart }) {
                 {copied ? '✓ Copied!' : '📋 Share Result'}
               </button>
               <button className="restart-btn" onClick={onRestart}>Play Again</button>
+              {onHome && <button className="hub-back-btn" style={{ alignSelf: 'center', marginTop: '0.25rem' }} onClick={onHome}>← Games Hub</button>}
             </div>
           )}
         </div>

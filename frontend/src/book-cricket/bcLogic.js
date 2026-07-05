@@ -89,3 +89,34 @@ export function getActiveTurn(t0, t1) {
 export function oversLabel(totalBalls) {
   return `${Math.floor(totalBalls / 6)}.${totalBalls % 6}`
 }
+
+// Returns correct this-over and prev-over entries from history,
+// accounting for extras (which appear in history but don't increment totalBalls).
+export function getOverHistory(history, totalBalls) {
+  if (history.length === 0) return { thisOver: [], prevOver: [] }
+
+  // Tag each entry with the over it was bowled in (0-indexed).
+  // An extra belongs to the over that was "active" before it was bowled.
+  let runningValid = 0
+  const tagged = history.map(entry => {
+    const overNum = Math.floor(runningValid / 6)
+    if (!entry.extra) runningValid++
+    return { entry, overNum }
+  })
+
+  // Current over index: if mid-over use that over; if exactly on boundary
+  // (over just completed), show last over as "prev" and current as empty.
+  const onBoundary = totalBalls > 0 && totalBalls % 6 === 0
+  const currentOverNum = onBoundary
+    ? Math.floor(totalBalls / 6)          // new over not started yet
+    : totalBalls === 0 ? 0
+    : Math.floor((totalBalls - 1) / 6)
+
+  const thisOver = onBoundary
+    ? []
+    : tagged.filter(t => t.overNum === currentOverNum).map(t => t.entry)
+  const prevOverNum = onBoundary ? currentOverNum - 1 : currentOverNum - 1
+  const prevOver = tagged.filter(t => t.overNum === prevOverNum).map(t => t.entry)
+
+  return { thisOver, prevOver }
+}

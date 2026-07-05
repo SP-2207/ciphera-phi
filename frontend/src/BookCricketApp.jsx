@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import BCHome   from './book-cricket/BCHome'
 import BCSetup  from './book-cricket/BCSetup'
 import BCLobby  from './book-cricket/BCLobby'
@@ -43,11 +43,14 @@ export default function BookCricketApp({ onHome }) {
   const [inviteRoomId,  setInviteRoomId]  = useState(null)
   const [guestBatCount, setGuestBatCount] = useState(4)
 
+  // Restored team state for computer-mode sessions
+  const [savedMyTeam,  setSavedMyTeam]  = useState(null)
+  const [savedOppTeam, setSavedOppTeam] = useState(null)
+
   // On mount: restore saved session OR detect invite URL
   useEffect(() => {
-    // 1. Check for an in-progress vs-friend session first
     const saved = loadSession()
-    if (saved?.roomId && saved?.playerId && saved?.opponent === 'friend') {
+    if (saved?.opponent === 'friend' && saved?.roomId && saved?.playerId) {
       setOpponent('friend')
       setFormat(saved.format)
       setOvers(saved.overs        || 0)
@@ -56,14 +59,28 @@ export default function BookCricketApp({ onHome }) {
       setRoomId(saved.roomId)
       setPlayerId(saved.playerId)
       setIsHost(saved.isHost)
-      setMyNames(saved.myNames   || [])
-      // Restore the URL hash so it still looks like the game room
+      setMyNames(saved.myNames || [])
       window.location.hash = `book-cricket/${saved.roomId}`
       setScreen('game')
       return
     }
 
-    // 2. No saved session — check for invite URL
+    if (saved?.opponent === 'computer' && saved?.format) {
+      setOpponent('computer')
+      setFormat(saved.format)
+      setOvers(saved.overs        || 0)
+      setBatsmanOvers(saved.batsmanOvers || 0)
+      setBatsmanCount(saved.batsmanCount || 4)
+      setMyNames(saved.myNames || [])
+      setPlayerId('local')
+      setIsHost(true)
+      if (saved.myTeam)  setSavedMyTeam(saved.myTeam)
+      if (saved.oppTeam) setSavedOppTeam(saved.oppTeam)
+      setScreen('game')
+      return
+    }
+
+    // No saved session — check for invite URL
     const hash = window.location.hash.slice(1)
     const m    = hash.match(/^book-cricket\/([A-Z][A-Z0-9]{5})$/)
     if (m) {
@@ -79,17 +96,26 @@ export default function BookCricketApp({ onHome }) {
     }
   }, []) // eslint-disable-line
 
-  // ── BCHome ───────────────────────────────────────────
+  // BCGame calls this on every team update — used to persist computer sessions
+  const handleTeamUpdate = useCallback((myTeam, oppTeam) => {
+    if (opponent !== 'computer') return
+    saveSession({
+      opponent: 'computer', format, overs, batsmanOvers, batsmanCount,
+      myNames, myTeam, oppTeam,
+    })
+  }, [opponent, format, overs, batsmanOvers, batsmanCount, myNames])
+
   function handleSelectOpponent(opp) {
     setOpponent(opp)
     setScreen('setup')
   }
 
-  // ── BCSetup → handleStart(format, overs, batsmanOvers, names, batsmanCount) ──
   async function handleStart(fmt, ovs, batOvs, names = [], count = 4) {
     setMyNames(names)
     setBatsmanCount(count)
     setJoinError('')
+    setSavedMyTeam(null)
+    setSavedOppTeam(null)
 
     if (opponent === 'computer') {
       setFormat(fmt)
@@ -102,17 +128,16 @@ export default function BookCricketApp({ onHome }) {
     }
 
     if (inviteRoomId) {
-      // ── GUEST ──────────────────────────────────────
       setScreen('joining')
       try {
         const room = await getBCRoom(inviteRoomId)
         if (!room) { setJoinError('Room not found. Ask your friend to create a new invite.'); setScreen('setup'); return }
         const guestId = await joinBCRoom(inviteRoomId)
         if (!guestId) { setJoinError('Room is full or already started.'); setScreen('setup'); return }
-        const resolvedFmt   = room.format
-        const resolvedOvs   = room.overs        || 0
+        const resolvedFmt    = room.format
+        const resolvedOvs    = room.overs        || 0
         const resolvedBatOvs = room.batsmanOvers || 0
-        const resolvedCount = room.batsmanCount || count
+        const resolvedCount  = room.batsmanCount || count
         setFormat(resolvedFmt)
         setOvers(resolvedOvs)
         setBatsmanOvers(resolvedBatOvs)
@@ -131,7 +156,6 @@ export default function BookCricketApp({ onHome }) {
         setScreen('setup')
       }
     } else {
-      // ── HOST ───────────────────────────────────────
       setScreen('joining')
       try {
         const id = genRoomId()
@@ -153,7 +177,6 @@ export default function BookCricketApp({ onHome }) {
   }
 
   function handleOpponentJoined() {
-    // Host enters game — save session so refresh resumes here
     saveSession({
       opponent: 'friend', roomId, playerId: 'host',
       isHost: true, format, overs, batsmanOvers, batsmanCount, myNames,
@@ -172,7 +195,8 @@ export default function BookCricketApp({ onHome }) {
     clearSession()
     setResult(null); setRoomId(null); setPlayerId(null)
     setInviteRoomId(null); setFormat(null); setOvers(0)
-    setBatsmanOvers(0); setBatsmanCount(4); setMyNames([]); setJoinError('')
+    setBatsmanOvers(0); setBatsmanCount(4); setMyNames([])
+    setSavedMyTeam(null); setSavedOppTeam(null); setJoinError('')
     window.location.hash = 'book-cricket'
     setScreen('home')
   }
@@ -181,10 +205,10 @@ export default function BookCricketApp({ onHome }) {
     clearSession()
     window.location.hash = 'book-cricket'
     setInviteRoomId(null); setOpponent(null); setJoinError('')
+    setSavedMyTeam(null); setSavedOppTeam(null)
     setScreen('home')
   }
 
-  // ── Render ───────────────────────────────────────────
   if (screen === 'home') return <BCHome onSelect={handleSelectOpponent} onHome={onHome} />
 
   if (screen === 'setup') {
@@ -233,7 +257,10 @@ export default function BookCricketApp({ onHome }) {
         playerId={playerId}
         isHost={isHost}
         myBatsmenNames={myNames}
+        initialMyTeam={savedMyTeam}
+        initialOppTeam={savedOppTeam}
         onGameOver={handleGameOver}
+        onTeamUpdate={opponent === 'computer' ? handleTeamUpdate : undefined}
         onHome={onHome}
       />
     )

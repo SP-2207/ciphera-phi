@@ -1,24 +1,23 @@
 import { useState, useEffect, useRef } from 'react'
-import { newTeamState, applyFlip, getActiveTurn, oversLabel, BOOK_PAGES } from './bcLogic'
+import { newTeamState, applyFlip, getActiveTurn, oversLabel, getOverHistory, BOOK_PAGES } from './bcLogic'
 import { subscribeToBCRoom, pushBCState, parseBCPlayer } from './bcFirebase'
 import BookFlip from './BookFlip'
+import BCInfoModal from './BCInfoModal'
 
 function BallPill({ entry }) {
   let cls, label
-  if (entry.wicket)              { cls = 'bc-ball--out';     label = 'W'        }
-  else if (entry.extraType==='nb'){ cls = 'bc-ball--nb';     label = 'NB'       }
-  else if (entry.extraType==='wd'){ cls = 'bc-ball--wd';     label = 'WD'       }
-  else if (entry.dot)            { cls = 'bc-ball--dot';     label = '·'        }
-  else if (entry.runs < 0)       { cls = 'bc-ball--penalty'; label = entry.runs }
-  else                           { cls = 'bc-ball--run';     label = entry.runs }
+  if (entry.wicket)               { cls = 'bc-ball--out';     label = 'W'        }
+  else if (entry.extraType==='nb') { cls = 'bc-ball--nb';     label = 'NB'       }
+  else if (entry.extraType==='wd') { cls = 'bc-ball--wd';     label = 'WD'       }
+  else if (entry.dot)             { cls = 'bc-ball--dot';     label = '·'        }
+  else if (entry.runs < 0)        { cls = 'bc-ball--penalty'; label = entry.runs }
+  else                            { cls = 'bc-ball--run';     label = entry.runs }
   return <span className={`bc-ball ${cls}`}>{label}</span>
 }
 
 function TeamPanel({ team, label, isYou, isActive, isBOMode, batsmanOvers }) {
-  const overStart     = Math.floor(team.totalBalls / 6) * 6
-  const thisOverBalls = team.history.slice(overStart)
-  const prevOverBalls = team.history.slice(Math.max(0, overStart - 6), overStart)
-  const extraRuns     = (team.nbRuns || 0) + (team.wdRuns || 0)
+  const { thisOver, prevOver } = getOverHistory(team.history, team.totalBalls)
+  const extraRuns = (team.nbRuns || 0) + (team.wdRuns || 0)
 
   return (
     <div className={`bc-team-panel${isActive ? ' bc-team--active' : ''}`}>
@@ -30,7 +29,6 @@ function TeamPanel({ team, label, isYou, isActive, isBOMode, batsmanOvers }) {
       </div>
       <div className="bc-overs-line">{oversLabel(team.totalBalls)} ov</div>
 
-      {/* Batsmen */}
       <div className="bc-batsmen">
         {team.batsmen.map((b, i) => {
           const isActiveBat = i === team.currentBatsman && !team.done
@@ -49,7 +47,6 @@ function TeamPanel({ team, label, isYou, isActive, isBOMode, batsmanOvers }) {
         })}
       </div>
 
-      {/* Extras sub-row */}
       {extraRuns > 0 && (
         <div className="bc-extras-row">
           <span className="bc-extras-label">Extras</span>
@@ -65,20 +62,19 @@ function TeamPanel({ team, label, isYou, isActive, isBOMode, batsmanOvers }) {
         </div>
       )}
 
-      {/* This over / last over balls */}
-      {thisOverBalls.length > 0 && (
+      {thisOver.length > 0 && (
         <div className="bc-over-row">
           <span className="bc-over-title">This over</span>
           <div className="bc-balls">
-            {thisOverBalls.map((b, i) => <BallPill key={i} entry={b} />)}
+            {thisOver.map((b, i) => <BallPill key={i} entry={b} />)}
           </div>
         </div>
       )}
-      {prevOverBalls.length > 0 && thisOverBalls.length === 0 && (
+      {thisOver.length === 0 && prevOver.length > 0 && (
         <div className="bc-over-row">
           <span className="bc-over-title">Last over</span>
           <div className="bc-balls">
-            {prevOverBalls.map((b, i) => <BallPill key={i} entry={b} />)}
+            {prevOver.map((b, i) => <BallPill key={i} entry={b} />)}
           </div>
         </div>
       )}
@@ -92,15 +88,18 @@ export default function BCGame({
   format, overs, batsmanOvers, batsmanCount,
   opponent, roomId, playerId, isHost,
   myBatsmenNames,
+  initialMyTeam, initialOppTeam,
   onGameOver, onHome,
+  onTeamUpdate,
 }) {
   const isBOMode = format === 'batsman-overs'
   const maxBalls = format === 'limited' ? overs * 6 : Infinity
   const boParam  = isBOMode ? batsmanOvers : null
 
-  const [myTeam,       setMyTeam]       = useState(() => newTeamState(myBatsmenNames, batsmanCount))
-  const [oppTeam,      setOppTeam]      = useState(() => newTeamState([], batsmanCount))
+  const [myTeam,       setMyTeam]       = useState(() => initialMyTeam  || newTeamState(myBatsmenNames, batsmanCount))
+  const [oppTeam,      setOppTeam]      = useState(() => initialOppTeam || newTeamState([], batsmanCount))
   const [compFlipping, setCompFlipping] = useState(false)
+  const [showInfo,     setShowInfo]     = useState(false)
 
   const myTeamRef    = useRef(myTeam)
   const oppTeamRef   = useRef(oppTeam)
@@ -108,6 +107,9 @@ export default function BCGame({
 
   useEffect(() => { myTeamRef.current  = myTeam  }, [myTeam])
   useEffect(() => { oppTeamRef.current = oppTeam }, [oppTeam])
+
+  // Notify parent of state changes (for computer-mode persistence)
+  useEffect(() => { onTeamUpdate?.(myTeam, oppTeam) }, [myTeam, oppTeam]) // eslint-disable-line
 
   // Push initial state so opponent sees correct names/count from the start
   useEffect(() => {
@@ -141,7 +143,7 @@ export default function BCGame({
     if (gameOver || isMyTurn || oppTeam.done || compFlipping) return
     compThinkRef.current = setTimeout(() => setCompFlipping(true), 1100)
     return () => clearTimeout(compThinkRef.current)
-  }, [opponent, gameOver, isMyTurn, oppTeam.done, compFlipping, oppTeam.totalBalls, oppTeam.history.length])
+  }, [opponent, gameOver, isMyTurn, oppTeam.done, compFlipping, oppTeam.history.length])
 
   // Game-over callback
   useEffect(() => {
@@ -150,7 +152,6 @@ export default function BCGame({
     return () => clearTimeout(t)
   }, [gameOver]) // eslint-disable-line
 
-  // ── Flip handlers ──────────────────────────────────
   function handleMyFlip(page) {
     const next = applyFlip(myTeamRef.current, page, maxBalls, boParam)
     setMyTeam(next)
@@ -163,7 +164,6 @@ export default function BCGame({
     setCompFlipping(false)
   }
 
-  // ── Skip Ball (computer) ───────────────────────────
   function skipBall() {
     clearTimeout(compThinkRef.current)
     setCompFlipping(false)
@@ -171,9 +171,7 @@ export default function BCGame({
     setOppTeam(next)
   }
 
-  // ── Skip Over (computer) ───────────────────────────
-  // Bowls until the current over's valid-ball count reaches 6,
-  // re-delivering extras so they don't count toward the over.
+  // Skip one full over (6 valid balls) for the computer.
   function skipOver() {
     clearTimeout(compThinkRef.current)
     setCompFlipping(false)
@@ -181,8 +179,20 @@ export default function BCGame({
     if (team.done) return
     const startBalls  = team.totalBalls
     const targetBalls = (Math.floor(startBalls / 6) + 1) * 6
-    let safety = 100  // cap against infinite extras loop
+    let safety = 200
     while (!team.done && team.totalBalls < targetBalls && safety-- > 0) {
+      team = applyFlip(team, Math.floor(Math.random() * BOOK_PAGES) + 1, maxBalls, boParam)
+    }
+    setOppTeam(team)
+  }
+
+  // Skip the entire remaining computer innings.
+  function skipAll() {
+    clearTimeout(compThinkRef.current)
+    setCompFlipping(false)
+    let team = oppTeamRef.current
+    let safety = 2000
+    while (!team.done && safety-- > 0) {
       team = applyFlip(team, Math.floor(Math.random() * BOOK_PAGES) + 1, maxBalls, boParam)
     }
     setOppTeam(team)
@@ -198,16 +208,17 @@ export default function BCGame({
   }
 
   return (
-    <div className="game">
+    <div className="game bc-game">
       <div className="header">
         <div className="header-left">
           <button className="icon-btn" onClick={onHome}>←</button>
         </div>
         <h1>Book Cricket</h1>
         <div className="header-right">
-          <span className="mode-badge" style={{ background: format === 'test' ? '#818384' : '#b59f3b' }}>
+          <span className="mode-badge" style={{ background: format === 'test' ? '#818384' : format === 'batsman-overs' ? '#5865f2' : '#b59f3b' }}>
             {formatBadge()}
           </span>
+          <button className="icon-btn" onClick={() => setShowInfo(true)} title="How to play">?</button>
         </div>
       </div>
 
@@ -219,8 +230,6 @@ export default function BCGame({
       {!gameOver && (
         <div className="bc-action">
           {target && <p className="bc-target">Target: <strong>{target}</strong></p>}
-
-          {/* KEY uses history.length so extras (which don't change totalBalls) still remount BookFlip */}
 
           {isMyTurn && !myTeam.done && (
             <BookFlip key={myTeam.history.length} onResult={handleMyFlip} />
@@ -235,6 +244,7 @@ export default function BCGame({
               <div className="bc-skip-controls">
                 <button className="bc-skip-ball-btn" onClick={skipBall}>⏭ Skip Ball</button>
                 <button className="bc-skip-over-btn" onClick={skipOver}>⏭⏭ Skip Over</button>
+                <button className="bc-skip-all-btn"  onClick={skipAll}>⏩ Skip All</button>
               </div>
             </>
           )}
@@ -255,6 +265,8 @@ export default function BCGame({
       )}
 
       {gameOver && <p className="bc-waiting" style={{ marginTop: '1rem' }}>Calculating result…</p>}
+
+      {showInfo && <BCInfoModal onClose={() => setShowInfo(false)} />}
     </div>
   )
 }

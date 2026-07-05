@@ -92,8 +92,8 @@ export default function CipheraApp({ onHome }) {
   }
 
   if (mode === 'compete') {
-    return <CompeteBoard roomId={roomId} playerId={playerId} onRestart={handleRestart} />
+    return <CompeteBoard roomId={roomId} playerId={playerId} onRestart={handleRestart} onHome={onHome} />
   }
 
-  return <GameBoard mode={mode} onRestart={handleRestart} />
+  return <GameBoard mode={mode} onRestart={handleRestart} onHome={onHome} />
 }

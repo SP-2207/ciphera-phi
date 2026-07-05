@@ -27,7 +27,7 @@ function Row({ guess, clues, isActive, currentInput }) {
   )
 }
 
-export default function GameBoard({ mode, onRestart }) {
+export default function GameBoard({ mode, onRestart, onHome }) {
   const [secret] = useState(generateSecret)
   const [guesses, setGuesses] = useState([])
   const [currentInput, setCurrentInput] = useState('')
@@ -153,6 +153,7 @@ export default function GameBoard({ mode, onRestart }) {
               {copied ? '✓ Copied!' : '📋 Share Result'}
             </button>
             <button className="restart-btn" onClick={onRestart}>Play Again</button>
+            {onHome && <button className="hub-back-btn" style={{ alignSelf: 'center', marginTop: '0.25rem' }} onClick={onHome}>← Games Hub</button>}
           </div>
         </div>
       )}
