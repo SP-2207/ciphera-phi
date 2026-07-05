@@ -1,4 +1,4 @@
-export default function ModeSelect({ onSelect, isInvite, loading }) {
+export default function ModeSelect({ onSelect, isInvite, loading, onHome }) {
   if (loading) {
     return (
       <div className="mode-select">
@@ -10,6 +10,7 @@ export default function ModeSelect({ onSelect, isInvite, loading }) {
   if (isInvite) {
     return (
       <div className="mode-select">
+        {onHome && <button className="hub-back-btn" onClick={onHome}>← Games</button>}
         <h1>Ciphera</h1>
         <div className="invite-card">
           <div className="invite-icon">⚔️</div>
@@ -25,6 +26,7 @@ export default function ModeSelect({ onSelect, isInvite, loading }) {
 
   return (
     <div className="mode-select">
+      {onHome && <button className="hub-back-btn" onClick={onHome}>← Games</button>}
       <h1>Ciphera</h1>
       <p className="mode-subtitle">Choose your game mode</p>
       <div className="mode-cards">

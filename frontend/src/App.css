@@ -4,6 +4,121 @@
   padding: 0;
 }
 
+/* ── Game Hub ────────────────────────────────────── */
+
+.hub {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 3rem 1.5rem 2rem;
+  background: #121213;
+  color: #fff;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  gap: 2.5rem;
+}
+
+.hub-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.hub-title {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hub-subtitle {
+  color: #818384;
+  font-size: 0.95rem;
+}
+
+.game-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.1rem;
+  width: 100%;
+  max-width: 560px;
+}
+
+.game-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.4rem 1.3rem 1.1rem;
+  background: #1e1e1f;
+  border: 2px solid #3a3a3c;
+  border-radius: 16px;
+  cursor: pointer;
+  text-align: left;
+  color: #fff;
+  font-family: inherit;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+  position: relative;
+}
+
+.game-tile:hover {
+  border-color: var(--tile-accent);
+  background: #272728;
+  transform: translateY(-3px);
+}
+
+.tile-icon {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.tile-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.tile-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.tile-desc {
+  font-size: 0.82rem;
+  color: #818384;
+  line-height: 1.4;
+}
+
+.tile-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  background: var(--tile-accent);
+  color: #fff;
+  align-self: flex-start;
+}
+
+/* Back-to-hub link shown in ModeSelect */
+.hub-back-btn {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: #818384;
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0.2rem 0;
+  transition: color 0.2s;
+  margin-bottom: -0.5rem;
+}
+
+.hub-back-btn:hover { color: #fff; }
+
 /* ── Mode Select ─────────────────────────────────── */
 
 .mode-select {
@@ -692,4 +807,682 @@
     font-size: 0.75rem;
     padding: 0.4rem 0.7rem;
   }
+}
+
+/* ════════════════════════════════════════════════════
+   BOOK CRICKET
+   ════════════════════════════════════════════════════ */
+
+/* ── BC Lobby (waiting for opponent) ────────────── */
+
+.bc-lobby {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+  padding: 1.5rem 1.5rem 2.5rem;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.bc-lobby-icon {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.bc-lobby-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.bc-lobby-sub {
+  font-size: 0.88rem;
+  color: #818384;
+}
+
+.bc-lobby-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 1.4rem;
+}
+
+.bc-lobby-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #538d4e;
+  animation: bc-pulse 1.2s ease-in-out infinite;
+}
+
+.bc-lobby-dot:nth-child(2) { animation-delay: 0.2s; }
+.bc-lobby-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bc-pulse {
+  0%, 100% { opacity: 0.25; transform: scale(0.8); }
+  50%       { opacity: 1;    transform: scale(1.15); }
+}
+
+.bc-lobby-joined {
+  color: #538d4e;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.bc-share-box {
+  background: #1e1e1f;
+  border: 1px solid #3a3a3c;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  width: 100%;
+  word-break: break-all;
+}
+
+.bc-share-url {
+  font-size: 0.8rem;
+  color: #ccc;
+  font-family: 'Courier New', monospace;
+  line-height: 1.5;
+}
+
+.bc-lobby-btns {
+  display: flex;
+  gap: 0.7rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.bc-copy-btn {
+  padding: 0.65rem 1.4rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  background: #538d4e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+
+.bc-copy-btn:hover { background: #6aaf65; }
+
+.bc-native-share-btn {
+  padding: 0.65rem 1.4rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  background: #5865f2;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+
+.bc-native-share-btn:hover { background: #4752c4; }
+
+/* ── BC Home / Setup ─────────────────────────────── */
+
+.bc-home,
+.bc-setup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1rem 1rem 2rem;
+  width: 100%;
+}
+
+.invite-card {
+  background: #1e1e1f;
+  border: 1px solid #3a3a3c;
+  border-radius: 14px;
+  padding: 2rem 1.8rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  max-width: 360px;
+  width: 100%;
+}
+
+.invite-icon {
+  font-size: 2.8rem;
+}
+
+.invite-card h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.invite-card p {
+  color: #818384;
+  font-size: 0.92rem;
+}
+
+.accept-btn {
+  padding: 0.75rem 1.8rem;
+  font-size: 1rem;
+  font-weight: 700;
+  background: #538d4e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+  margin-top: 0.4rem;
+}
+
+.accept-btn:hover { background: #6aaf65; }
+
+.bc-overs-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+  max-width: 320px;
+}
+
+.bc-overs-label {
+  font-size: 0.9rem;
+  color: #ccc;
+  flex-shrink: 0;
+}
+
+.bc-input {
+  width: 80px;
+  padding: 0.45rem 0.7rem;
+  font-size: 1rem;
+  background: #1e1e1f;
+  color: #fff;
+  border: 1px solid #3a3a3c;
+  border-radius: 6px;
+  font-family: inherit;
+}
+
+.bc-input:focus {
+  outline: none;
+  border-color: #538d4e;
+}
+
+.bc-card--selected {
+  border-color: #538d4e !important;
+  background: rgba(83, 141, 78, 0.12) !important;
+}
+
+/* ── BC Game panels ──────────────────────────────── */
+
+.bc-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  width: 100%;
+  max-width: 760px;
+  padding: 0 0.5rem;
+}
+
+.bc-team-panel {
+  background: #1e1e1f;
+  border: 2px solid #3a3a3c;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  transition: border-color 0.2s;
+}
+
+.bc-team--active {
+  border-color: #538d4e;
+}
+
+.bc-score-main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.15rem;
+  margin-top: 0.2rem;
+}
+
+.bc-runs {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.bc-wkt {
+  font-size: 1.1rem;
+  color: #818384;
+  font-weight: 600;
+}
+
+.bc-overs-line {
+  font-size: 0.8rem;
+  color: #818384;
+}
+
+.bc-batsmen {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.3rem;
+  border-top: 1px solid #2a2a2b;
+  padding-top: 0.4rem;
+}
+
+.bc-batsman-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #818384;
+  padding: 0.15rem 0;
+}
+
+.bc-bat--active {
+  color: #e0e0e0;
+  font-weight: 600;
+}
+
+.bc-bat--out {
+  text-decoration: line-through;
+  opacity: 0.55;
+}
+
+.bc-bat-name {
+  min-width: 38px;
+}
+
+.bc-bat-score {
+  flex: 1;
+}
+
+.bc-bat-balls {
+  font-size: 0.7rem;
+  color: #818384;
+}
+
+.bc-out-tag {
+  font-size: 0.68rem;
+  background: #3a3a3c;
+  color: #ccc;
+  border-radius: 4px;
+  padding: 0.05rem 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bc-over-row {
+  margin-top: 0.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.bc-over-title {
+  font-size: 0.7rem;
+  color: #818384;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.bc-balls {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.bc-ball {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.bc-ball--run  { background: #538d4e; color: #fff; }
+.bc-ball--dot  { background: #3a3a3c; color: #818384; }
+.bc-ball--out  { background: #c0392b; color: #fff; }
+
+.bc-innings-done {
+  font-size: 0.75rem;
+  color: #538d4e;
+  font-weight: 600;
+  margin-top: 0.2rem;
+}
+
+/* ── BC Action area ──────────────────────────────── */
+
+.bc-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.5rem 0;
+  width: 100%;
+}
+
+.bc-target {
+  font-size: 0.95rem;
+  color: #b59f3b;
+}
+
+.bc-target strong {
+  font-size: 1.1rem;
+}
+
+.bc-waiting {
+  color: #818384;
+  font-size: 0.9rem;
+  font-style: italic;
+  text-align: center;
+}
+
+/* ── BookFlip widget ─────────────────────────────── */
+
+.bc-flip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Open-book graphic */
+.bc-book-widget {
+  position: relative;
+  width: 200px;
+  height: 130px;
+}
+
+.bc-book-widget--settled .bc-book-cover {
+  border-color: #538d4e;
+  box-shadow: 0 0 0 2px rgba(83,141,78,0.35), 0 4px 20px rgba(0,0,0,0.5);
+}
+
+.bc-book-cover {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  border-radius: 5px 12px 12px 5px;
+  overflow: hidden;
+  border: 2px solid #3a3a3c;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.bc-book-left-page {
+  flex: 1;
+  background: linear-gradient(to right, #1a1512, #2a2420);
+}
+
+.bc-book-spine {
+  width: 10px;
+  background: linear-gradient(to right, #111, #2a2420, #111);
+  flex-shrink: 0;
+}
+
+.bc-book-right-page {
+  flex: 1;
+  background: #f5f0e8;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Each page-flip element: remounted per tick, plays once */
+.bc-page-anim {
+  position: absolute;
+  top: 2px; bottom: 2px;
+  left: 50%;
+  width: calc(50% - 6px);
+  background: #f5f0e8;
+  border-radius: 0 6px 6px 0;
+  transform-origin: left center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: bc-page-flip 0.18s ease-in-out forwards;
+  box-shadow: -3px 0 10px rgba(0,0,0,0.4);
+}
+
+.bc-page-anim-num {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1a1512;
+  user-select: none;
+}
+
+@keyframes bc-page-flip {
+  0%   { transform: perspective(250px) rotateY(0deg); }
+  45%  { transform: perspective(250px) rotateY(-90deg); opacity: 1; }
+  46%  { opacity: 0; }
+  100% { transform: perspective(250px) rotateY(-175deg); opacity: 0; }
+}
+
+/* Large page number readout below the book */
+.bc-page-readout {
+  min-height: 3.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  transition: opacity 0.25s;
+}
+
+.bc-readout-idle {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #3a3a3c;
+}
+
+.bc-readout-spin {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #b59f3b;
+  font-variant-numeric: tabular-nums;
+}
+
+.bc-page-readout--show .bc-readout-num {
+  animation: bc-pop 0.3s cubic-bezier(.17,.67,.38,1.4) forwards;
+}
+
+.bc-readout-label {
+  font-size: 0.65rem;
+  color: #818384;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.bc-readout-num {
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: #538d4e;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes bc-pop {
+  0%   { transform: scale(0.7); opacity: 0; }
+  70%  { transform: scale(1.15); }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+/* Flip / Skip buttons */
+.bc-flip-btn {
+  padding: 0.7rem 1.8rem;
+  font-size: 1rem;
+  font-weight: 700;
+  background: #538d4e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.bc-flip-btn:hover:not(:disabled) { background: #6aaf65; }
+.bc-flip-btn:active { transform: scale(0.95); }
+.bc-flip-btn:disabled { opacity: 0.5; cursor: default; }
+
+.bc-skip-btn {
+  padding: 0.4rem 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: transparent;
+  color: #818384;
+  border: 1px solid #3a3a3c;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.bc-skip-btn:hover { color: #ccc; border-color: #818384; }
+
+/* ── Skip Ball / Skip Over (computer mode) ───────── */
+
+.bc-skip-controls {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.25rem;
+}
+
+.bc-skip-ball-btn,
+.bc-skip-over-btn {
+  padding: 0.45rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: 1px solid #3a3a3c;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  background: transparent;
+  color: #818384;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.bc-skip-ball-btn:hover {
+  background: #2a2a2b;
+  color: #ccc;
+  border-color: #818384;
+}
+
+.bc-skip-over-btn:hover {
+  background: rgba(181,159,59,0.12);
+  color: #b59f3b;
+  border-color: #b59f3b;
+}
+
+/* ── Batsman names section ───────────────────────── */
+
+.bc-names-section {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+}
+
+.bc-names-hint {
+  font-size: 0.82rem;
+  color: #818384;
+  text-align: center;
+}
+
+.bc-names-hint span {
+  font-style: italic;
+}
+
+.bc-names-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.bc-name-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.bc-name-label {
+  font-size: 0.72rem;
+  color: #818384;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.bc-input--name {
+  width: 100% !important;
+  font-size: 0.88rem !important;
+  padding: 0.4rem 0.6rem !important;
+}
+
+/* ── BC Result screen ────────────────────────────── */
+
+.bc-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 0 1rem 2rem;
+}
+
+.bc-verdict {
+  font-size: 1.5rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.bc-verdict--win  { color: #538d4e; }
+.bc-verdict--loss { color: #818384; }
+.bc-verdict--tie  { color: #b59f3b; }
+
+.bc-format-label {
+  font-size: 0.8rem;
+  color: #818384;
+}
+
+.bc-result-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  width: 100%;
+  max-width: 600px;
+}
+
+.bc-result-card {
+  background: #1e1e1f;
+  border: 2px solid #3a3a3c;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.bc-result-card--you  { border-color: #538d4e; }
+.bc-result-card--opp  { border-color: #5865f2; }
+
+/* ── Mobile tweaks ───────────────────────────────── */
+
+@media (max-width: 540px) {
+  .bc-panels,
+  .bc-result-panels {
+    grid-template-columns: 1fr;
+  }
+
+  .bc-runs { font-size: 1.6rem; }
 }
