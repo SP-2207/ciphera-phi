@@ -32,6 +32,13 @@ export default function BCHome({ onSelect, onHome }) {
             <span className="mode-desc">Share a link and compete live</span>
           </span>
         </button>
+        <button className="mode-card" onClick={() => onSelect('t20')}>
+          <span className="mode-icon">🏆</span>
+          <span className="mode-text">
+            <span className="mode-name">T20 Match</span>
+            <span className="mode-desc">Pick a country team · 20 overs · one flip per over</span>
+          </span>
+        </button>
       </div>
 
       {showInfo && <BCInfoModal onClose={() => setShowInfo(false)} />}

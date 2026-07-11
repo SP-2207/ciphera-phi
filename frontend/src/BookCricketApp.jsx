@@ -1,9 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
-import BCHome   from './book-cricket/BCHome'
-import BCSetup  from './book-cricket/BCSetup'
-import BCLobby  from './book-cricket/BCLobby'
-import BCGame   from './book-cricket/BCGame'
-import BCResult from './book-cricket/BCResult'
+import BCHome           from './book-cricket/BCHome'
+import BCSetup          from './book-cricket/BCSetup'
+import BCLobby          from './book-cricket/BCLobby'
+import BCGame           from './book-cricket/BCGame'
+import BCResult         from './book-cricket/BCResult'
+import T20CountryPicker from './book-cricket/T20CountryPicker'
+import T20OrderEditor   from './book-cricket/T20OrderEditor'
+import T20Game          from './book-cricket/T20Game'
 import { createBCRoom, joinBCRoom, getBCRoom } from './book-cricket/bcFirebase'
 
 const SESSION_KEY = 'bc_active_session'
@@ -26,7 +29,7 @@ function genRoomId() {
   return id
 }
 
-// Screens: 'home' | 'setup' | 'joining' | 'lobby' | 'game' | 'result'
+// Screens: 'home' | 'setup' | 'joining' | 'lobby' | 'game' | 'result' | 't20-pick' | 't20-order' | 't20-game'
 export default function BookCricketApp({ onHome }) {
   const [screen,        setScreen]        = useState('home')
   const [opponent,      setOpponent]      = useState(null)
@@ -46,6 +49,12 @@ export default function BookCricketApp({ onHome }) {
   // Restored team state for computer-mode sessions
   const [savedMyTeam,  setSavedMyTeam]  = useState(null)
   const [savedOppTeam, setSavedOppTeam] = useState(null)
+
+  // T20 mode state
+  const [t20UserCountry,  setT20UserCountry]  = useState(null)
+  const [t20CompCountry,  setT20CompCountry]  = useState(null)
+  const [t20UserPlayers,  setT20UserPlayers]  = useState([])
+  const [t20CompPlayers,  setT20CompPlayers]  = useState([])
 
   // On mount: restore saved session OR detect invite URL
   useEffect(() => {
@@ -107,7 +116,11 @@ export default function BookCricketApp({ onHome }) {
 
   function handleSelectOpponent(opp) {
     setOpponent(opp)
-    setScreen('setup')
+    if (opp === 't20') {
+      setScreen('t20-pick')
+    } else {
+      setScreen('setup')
+    }
   }
 
   async function handleStart(fmt, ovs, batOvs, names = [], count = 4) {
@@ -277,6 +290,47 @@ export default function BookCricketApp({ onHome }) {
         batsmanOvers={batsmanOvers}
         onPlayAgain={handlePlayAgain}
         onHome={onHome}
+      />
+    )
+  }
+
+  if (screen === 't20-pick') {
+    return (
+      <T20CountryPicker
+        onSelect={(uCountry, cCountry) => {
+          setT20UserCountry(uCountry)
+          setT20CompCountry(cCountry)
+          setScreen('t20-order')
+        }}
+        onBack={handleBack}
+      />
+    )
+  }
+
+  if (screen === 't20-order') {
+    return (
+      <T20OrderEditor
+        userCountry={t20UserCountry}
+        compCountry={t20CompCountry}
+        onStart={(uPlayers, cPlayers) => {
+          setT20UserPlayers(uPlayers)
+          setT20CompPlayers(cPlayers)
+          setScreen('t20-game')
+        }}
+        onBack={() => setScreen('t20-pick')}
+      />
+    )
+  }
+
+  if (screen === 't20-game') {
+    return (
+      <T20Game
+        userPlayers={t20UserPlayers}
+        compPlayers={t20CompPlayers}
+        userCountry={t20UserCountry}
+        compCountry={t20CompCountry}
+        onHome={onHome}
+        onPlayAgain={handleBack}
       />
     )
   }
