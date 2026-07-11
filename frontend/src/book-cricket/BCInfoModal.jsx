@@ -47,6 +47,15 @@ export default function BCInfoModal({ onClose }) {
                 Highest total wins.
               </span>
             </div>
+            <div className="mode-info-row">
+              <span className="mode-badge" style={{ background: '#b07a20' }}>T20 Match</span>
+              <span>
+                Pick a real ICC T20 WC team · 20 overs per side · one book flip = one full over.
+                The page you stop on sets Ball 1; five more balls are auto-generated from it.
+                Edit batting order before the match starts. Second innings chases a target to win.
+                Skip Over / Skip All available during the computer's innings.
+              </span>
+            </div>
           </div>
 
           <ul className="modal-rules">
@@ -54,6 +63,7 @@ export default function BCInfoModal({ onClose }) {
             <li>Teams alternate every over (limited / batsman overs)</li>
             <li>NB &amp; WD runs count to team total but not the batsman's individual score</li>
             <li>Chase target: batting team wins if they beat opponent's total</li>
+            <li>T20: all 11 players bat; innings ends when all are out or 20 overs complete</li>
           </ul>
         </div>
       </div>

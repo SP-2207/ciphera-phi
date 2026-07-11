@@ -60,26 +60,29 @@ export default function T20OrderEditor({ userCountry, compCountry, onStart, onBa
       </div>
 
       <div className="t20-order-wrap">
-        <p className="mode-subtitle">Drag the order to your liking, then start the match</p>
-        <OrderList
-          label="YOUR INNINGS"
-          country={userCountry}
-          players={userPlayers}
-          onChange={setUserPlayers}
-        />
-        <OrderList
-          label="COMPUTER INNINGS"
-          country={compCountry}
-          players={compPlayers}
-          onChange={setCompPlayers}
-        />
-        <button
-          className="accept-btn"
-          style={{ marginTop: '1rem' }}
-          onClick={() => onStart(userPlayers, compPlayers)}
-        >
-          🏏 Start Match →
-        </button>
+        <div className="t20-order-scroll">
+          <p className="mode-subtitle" style={{ margin: 0 }}>Drag the order to your liking, then start the match</p>
+          <OrderList
+            label="YOUR INNINGS"
+            country={userCountry}
+            players={userPlayers}
+            onChange={setUserPlayers}
+          />
+          <OrderList
+            label="COMPUTER INNINGS"
+            country={compCountry}
+            players={compPlayers}
+            onChange={setCompPlayers}
+          />
+        </div>
+        <div className="t20-order-footer">
+          <button
+            className="accept-btn"
+            onClick={() => onStart(userPlayers, compPlayers)}
+          >
+            🏏 Start Match →
+          </button>
+        </div>
       </div>
     </div>
   )

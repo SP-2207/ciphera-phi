@@ -143,7 +143,7 @@
 .mode-subtitle {
   color: #818384;
   font-size: 1rem;
-  margin-top: -1rem;
+  margin-top: -0.4rem;
 }
 
 .mode-cards {
@@ -1727,6 +1727,23 @@
   }
 }
 
+/* T20 mobile: stretch game wrap and pin action area */
+@media (max-width: 480px) {
+  .t20-game-wrap {
+    align-self: stretch;
+    padding-bottom: 0;
+  }
+
+  .t20-action-area {
+    position: sticky;
+    bottom: 0;
+    background: #121213;
+    padding: 0.6rem 0.75rem 1rem;
+    border-top: 1px solid #3a3a3c;
+    z-index: 10;
+  }
+}
+
 /* BC How-to-play modal table */
 .bc-htp-table {
   display: flex;
@@ -1849,10 +1866,27 @@
    ════════════════════════════════════════════════════ */
 
 .t20-order-wrap {
-  padding: 0 1rem 2rem;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 440px;
+}
+
+.t20-order-scroll {
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
+  padding: 0 1rem 1rem;
+}
+
+.t20-order-footer {
+  position: sticky;
+  bottom: 0;
+  background: #121213;
+  padding: 0.75rem 1rem 1.25rem;
+  border-top: 1px solid #3a3a3c;
+  display: flex;
+  justify-content: center;
 }
 
 .t20-order-section {
