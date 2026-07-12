@@ -6,6 +6,44 @@ import { BOOK_PAGES } from './bcLogic'
 const PLAYER_MAX_MS = 4000   // auto-stop at 4 s → page 500 → wicket
 const PLAYER_TICK   = 50     // counter refresh rate (ms)
 
+// ── Synthesised page-flick sound (Web Audio, no asset file needed) ────────────
+let _actx = null
+function getActx() {
+  if (!_actx) {
+    try { _actx = new (window.AudioContext || window.webkitAudioContext)() } catch (_) {}
+    // iOS requires resume() inside a user gesture — attach once to the first tap anywhere
+    const unlock = () => {
+      _actx?.resume().catch(() => {})
+      document.removeEventListener('click',      unlock, true)
+      document.removeEventListener('touchstart', unlock, true)
+    }
+    document.addEventListener('click',      unlock, true)
+    document.addEventListener('touchstart', unlock, true)
+  }
+  return _actx
+}
+function playFlick(vol = 0.22) {
+  const ctx = getActx()
+  if (!ctx || ctx.state !== 'running') return
+  try {
+    const len = Math.floor(ctx.sampleRate * 0.05)
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate)
+    const d   = buf.getChannelData(0)
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 1.5
+    const src  = ctx.createBufferSource()
+    const filt = ctx.createBiquadFilter()
+    const gain = ctx.createGain()
+    src.buffer           = buf
+    filt.type            = 'bandpass'
+    filt.frequency.value = 1400 + Math.random() * 1400
+    filt.Q.value         = 1.5
+    gain.gain.value      = vol
+    src.connect(filt); filt.connect(gain); gain.connect(ctx.destination)
+    src.start()
+  } catch (_) {}
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function pageFromElapsed(elapsed) {
   if (elapsed >= PLAYER_MAX_MS) return 500
   return Math.max(1, Math.min(499, Math.round(1 + (elapsed / PLAYER_MAX_MS) * 498)))
@@ -81,6 +119,7 @@ export default function BookFlip({
       flipFrame++
       if (flipFrame % 3 === 0) {
         setPageKey(k => k + 1)
+        playFlick()
       }
 
       if (elapsed >= PLAYER_MAX_MS) {
@@ -104,6 +143,7 @@ export default function BookFlip({
     finalRef.current   = page
     setDisplay(page)
     setPhase('settled')
+    playFlick(0.45)
     timerRef.current = setTimeout(() => onResultRef.current(page), 600)
   }
 
@@ -121,6 +161,7 @@ export default function BookFlip({
     function tick(delay) {
       timerRef.current = setTimeout(() => {
         count++
+        playFlick()
         if (count >= total) {
           setDisplay(finalRef.current)
           setPageKey(k => k + 1)
