@@ -124,6 +124,11 @@ export default function DBGame({
             See Results →
           </button>
         )}
+        {!isDone && mode === 'friend' && (
+          <button className="db-end-game-btn" onClick={() => onMove('endgame', 0)}>
+            End Game
+          </button>
+        )}
       </div>
 
       {/* SVG grid */}

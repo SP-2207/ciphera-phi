@@ -27,6 +27,16 @@ function genRoomId() {
   return id
 }
 
+function saveDbSession(roomId, data) {
+  try { localStorage.setItem(`db_session_${roomId}`, JSON.stringify(data)) } catch (_) {}
+}
+function loadDbSession(roomId) {
+  try { return JSON.parse(localStorage.getItem(`db_session_${roomId}`)) } catch (_) { return null }
+}
+function clearDbSession(roomId) {
+  try { localStorage.removeItem(`db_session_${roomId}`) } catch (_) {}
+}
+
 // Screens: 'home' | 'setup' | 'lobby' | 'game' | 'result'
 export default function DotsBoxesApp({ onHome }) {
   const [screen,           setScreen]           = useState('home')
@@ -67,15 +77,28 @@ export default function DotsBoxesApp({ onHome }) {
   myPlayerIdRef.current = myPlayerId
   screenRef.current     = screen
 
-  // ── Mount: detect invite URL ──────────────────────────────────────────────
+  // ── Mount: detect invite URL + localStorage re-entry ─────────────────────
   useEffect(() => {
     const hash = window.location.hash.slice(1)
     const m    = hash.match(/^dots-boxes\/([A-Z][A-Z0-9]{5})$/)
-    if (m) {
-      setIsInvite(true)
-      setInviteRoomId(m[1])
-      setMode('friend')
-      modeRef.current = 'friend'
+    if (!m) return
+
+    const rid    = m[1]
+    const saved  = loadDbSession(rid)
+
+    setIsInvite(true)
+    setInviteRoomId(rid)
+    setMode('friend')
+    modeRef.current = 'friend'
+
+    if (saved?.playerId) {
+      // Reconnect without setup form
+      setMyPlayerId(saved.playerId)
+      myPlayerIdRef.current = saved.playerId
+      setRoomId(rid)
+      roomIdRef.current = rid
+      setScreen('lobby') // Firebase subscription will update to 'game' if already started
+    } else {
       setScreen('setup')
     }
   }, []) // eslint-disable-line
@@ -108,6 +131,9 @@ export default function DotsBoxesApp({ onHome }) {
         const myEntry = list.find(p => p.id === currId)
         if (myEntry) setMySlot(myEntry.slot)
       }
+
+      // Always sync player count (needed for reconnect-to-lobby)
+      if (room.playerCount) setTargetPlayerCount(room.playerCount)
 
       // Host: start game when lobby is full
       if (room.phase === 'waiting' && !startedRef.current) {
@@ -178,13 +204,40 @@ export default function DotsBoxesApp({ onHome }) {
 
     if (!gs || gs.phase !== 'playing') return
 
-    // Skip action: advance turn
+    // End game early: finalize with current scores
+    if (type === 'endgame') {
+      const newGs = { ...gs, phase: 'done' }
+      setGameState(newGs)
+      gameStateRef.current = newGs
+      setFinalState(newGs)
+      if (m === 'friend' && rid) pushDBGameState(rid, newGs).catch(console.error)
+      if (m === 'computer') setScreen('result')
+      return
+    }
+
+    // Skip action: advance turn, track streak for auto-end
     if (type === 'skip') {
-      const nextSlot = (gs.currentSlot + 1) % ps.length
-      const newGs    = { ...gs, currentSlot: nextSlot, turnStartedAt: Date.now() }
+      const skippedSlot  = gs.currentSlot
+      const prevStreak   = gs.skipStreak
+      const streakCount  = prevStreak?.slot === skippedSlot
+        ? (prevStreak.count || 0) + 1
+        : 1
+      const shouldEnd    = streakCount >= 3
+      const nextSlot     = (skippedSlot + 1) % ps.length
+      const newGs        = {
+        ...gs,
+        currentSlot:   nextSlot,
+        turnStartedAt: Date.now(),
+        skipStreak:    shouldEnd ? null : { slot: skippedSlot, count: streakCount },
+        phase:         shouldEnd ? 'done' : gs.phase,
+      }
       setGameState(newGs)
       gameStateRef.current = newGs
       if (m === 'friend' && rid) pushDBGameState(rid, newGs).catch(console.error)
+      if (shouldEnd) {
+        setFinalState(newGs)
+        if (m === 'computer') setScreen('result')
+      }
       return
     }
 
@@ -199,7 +252,7 @@ export default function DotsBoxesApp({ onHome }) {
       ? gs.currentSlot
       : (gs.currentSlot + 1) % ps.length
 
-    const finalGs = { ...newState, currentSlot: nextSlot, turnStartedAt: Date.now() }
+    const finalGs = { ...newState, currentSlot: nextSlot, turnStartedAt: Date.now(), skipStreak: null }
     setGameState(finalGs)
     gameStateRef.current = finalGs
 
@@ -262,6 +315,7 @@ export default function DotsBoxesApp({ onHome }) {
         setRoomId(inviteRoomId)
         roomIdRef.current = inviteRoomId
         setTargetPlayerCount(room.playerCount || 2)
+        saveDbSession(inviteRoomId, { playerId, initials })
         setScreen('lobby')
       } catch (err) {
         console.error(err)
@@ -280,6 +334,7 @@ export default function DotsBoxesApp({ onHome }) {
       myPlayerIdRef.current = hostId
       setMySlot(0)
       setTargetPlayerCount(playerCount)
+      saveDbSession(id, { playerId: hostId, initials })
       window.location.hash = `dots-boxes/${id}`
       setScreen('lobby')
     } catch (err) {
@@ -291,6 +346,7 @@ export default function DotsBoxesApp({ onHome }) {
   // ── Play Again / Back ─────────────────────────────────────────────────────
   function handlePlayAgain() {
     if (unsubRef.current) { unsubRef.current(); unsubRef.current = null }
+    if (roomIdRef.current) clearDbSession(roomIdRef.current)
     startedRef.current    = false
     gameStateRef.current  = null
     playersRef.current    = []

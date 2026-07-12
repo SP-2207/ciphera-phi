@@ -13,7 +13,7 @@ export default function DBInfoModal({ onClose }) {
           </p>
 
           <ul className="modal-rules" style={{ marginTop: '0.75rem' }}>
-            <li>10×10 dot grid — 81 boxes to claim</li>
+            <li>Choose grid size at setup: 4×4 up to 14×14 cells</li>
             <li>Draw one line per turn (horizontal or vertical)</li>
             <li>Complete a box → you claim it + get an extra turn</li>
             <li>Player with the most boxes at the end wins</li>

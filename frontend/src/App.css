@@ -2453,6 +2453,15 @@
   margin-bottom: 0.25rem;
 }
 
+.db-lobby-desc {
+  color: #818384;
+  font-size: 0.85rem;
+  text-align: center;
+  max-width: 300px;
+  margin: 0.25rem 0 0.75rem;
+  line-height: 1.4;
+}
+
 .db-lobby-code {
   font-size: 2rem;
   font-weight: 800;
@@ -2581,6 +2590,22 @@
 
 .db-skip-turn-btn:hover {
   background: rgba(181, 159, 59, 0.22);
+}
+
+.db-end-game-btn {
+  background: none;
+  border: none;
+  color: #818384;
+  font-size: 0.78rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.2rem 0;
+  display: block;
+  margin: 0.4rem auto 0;
+}
+
+.db-end-game-btn:hover {
+  color: #e74c3c;
 }
 
 .db-grid-scroll {

@@ -24,6 +24,11 @@ export default function DBLobby({ roomId, playerCount, players, myPlayerId, onBa
 
         <div className="db-lobby-code">{roomId}</div>
 
+        <p className="db-lobby-desc">
+          Share this link so your friends can join your Dots &amp; Boxes game.
+          The game starts automatically once everyone joins.
+        </p>
+
         <button className="accept-btn" style={{ marginBottom: '1.5rem' }} onClick={copyInvite}>
           Copy Invite Link
         </button>

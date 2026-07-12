@@ -43,7 +43,7 @@ function fromSparse(sparse, length) {
 
 export function serializeGameState(state) {
   const dots = state.dots || 10
-  return {
+  const out = {
     dots,
     h:             toSparse(state.hLines),
     v:             toSparse(state.vLines),
@@ -54,6 +54,8 @@ export function serializeGameState(state) {
     phase:         state.phase         || 'playing',
     turnStartedAt: state.turnStartedAt || Date.now(),
   }
+  if (state.skipStreak) out.skipStreak = state.skipStreak
+  return out
 }
 
 export function deserializeGameState(raw) {
@@ -70,6 +72,7 @@ export function deserializeGameState(raw) {
     moveCount:     raw.moveCount     ?? 0,
     phase:         raw.phase         || 'playing',
     turnStartedAt: raw.turnStartedAt || Date.now(),
+    skipStreak:    raw.skipStreak    || null,
   }
 }
 
