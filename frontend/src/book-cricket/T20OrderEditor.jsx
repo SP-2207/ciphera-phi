@@ -50,7 +50,7 @@ export default function T20OrderEditor({ userCountry, compCountry, onStart, onBa
   const [compPlayers, setCompPlayers] = useState([...compCountry.players])
 
   return (
-    <div className="game">
+    <div className="game t20-order-screen">
       <div className="header">
         <div className="header-left">
           <button className="icon-btn" onClick={onBack}>←</button>

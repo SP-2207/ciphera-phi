@@ -1880,13 +1880,36 @@
 }
 
 .t20-order-footer {
-  position: sticky;
-  bottom: 0;
   background: #121213;
   padding: 0.75rem 1rem 1.25rem;
   border-top: 1px solid #3a3a3c;
   display: flex;
   justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Mobile: lock screen to viewport height so order tables scroll and
+   Start Match footer stays pinned at the bottom */
+@media (max-width: 480px) {
+  .t20-order-screen {
+    height: 100dvh;
+    overflow: hidden;
+    padding: 0 0.5rem 0;
+  }
+
+  .t20-order-screen .t20-order-wrap {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    align-self: stretch;
+  }
+
+  .t20-order-screen .t20-order-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 .t20-order-section {
