@@ -1,22 +1,23 @@
-// ── Constants ────────────────────────────────────────────────────────────────
-export const DOTS        = 10
-export const CELLS       = 9           // DOTS - 1
-export const H_COUNT     = DOTS * CELLS  // 90  horizontal lines
-export const V_COUNT     = CELLS * DOTS  // 90  vertical lines
-export const BOX_COUNT   = CELLS * CELLS // 81  boxes
-
 export const PLAYER_COLORS = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12']
 
-// ── State factory ────────────────────────────────────────────────────────────
-/**
- * Create a fresh game state.
- * @param {string[]} playerIds - ordered array of player IDs (slot 0 goes first)
- */
-export function newGameState(playerIds) {
+// Derive grid dimensions from dot count
+function grid(dots) {
+  const cells    = dots - 1
+  const hCount   = dots * cells
+  const vCount   = cells * dots
+  const boxCount = cells * cells
+  return { cells, hCount, vCount, boxCount }
+}
+
+// ── State factory ─────────────────────────────────────────────────────────────
+
+export function newGameState(playerIds, dots = 10) {
+  const { hCount, vCount, boxCount } = grid(dots)
   return {
-    hLines:        Array(H_COUNT).fill(null),
-    vLines:        Array(V_COUNT).fill(null),
-    boxes:         Array(BOX_COUNT).fill(null),
+    dots,
+    hLines:        Array(hCount).fill(null),
+    vLines:        Array(vCount).fill(null),
+    boxes:         Array(boxCount).fill(null),
     scores:        Object.fromEntries(playerIds.map(id => [id, 0])),
     currentSlot:   0,
     moveCount:     0,
@@ -25,50 +26,46 @@ export function newGameState(playerIds) {
   }
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** Return box flat-indices affected by a given line draw. */
-function affectedBoxes(type, idx) {
+function affectedBoxes(type, idx, dots, cells) {
   const result = []
   if (type === 'h') {
-    const r = Math.floor(idx / CELLS)
-    const c = idx % CELLS
-    if (r > 0)     result.push((r - 1) * CELLS + c)
-    if (r < CELLS) result.push(r * CELLS + c)
+    const r = Math.floor(idx / cells)
+    const c = idx % cells
+    if (r > 0)     result.push((r - 1) * cells + c)
+    if (r < cells) result.push(r * cells + c)
   } else {
-    const r = Math.floor(idx / DOTS)
-    const c = idx % DOTS
-    if (c > 0)     result.push(r * CELLS + (c - 1))
-    if (c < CELLS) result.push(r * CELLS + c)
+    const r = Math.floor(idx / dots)
+    const c = idx % dots
+    if (c > 0)     result.push(r * cells + (c - 1))
+    if (c < cells) result.push(r * cells + c)
   }
   return result
 }
 
-/** Count how many sides box bi already has drawn. */
-function sidesDrawn(hLines, vLines, bi) {
-  const r = Math.floor(bi / CELLS)
-  const c = bi % CELLS
+function sidesDrawn(hLines, vLines, bi, dots, cells) {
+  const r = Math.floor(bi / cells)
+  const c = bi % cells
   let n = 0
-  if (hLines[r * CELLS + c])         n++
-  if (hLines[(r + 1) * CELLS + c])   n++
-  if (vLines[r * DOTS + c])          n++
-  if (vLines[r * DOTS + (c + 1)])    n++
+  if (hLines[r       * cells + c  ]) n++
+  if (hLines[(r + 1) * cells + c  ]) n++
+  if (vLines[r       * dots  + c  ]) n++
+  if (vLines[r       * dots  + c+1]) n++
   return n
 }
 
-// ── applyMove ────────────────────────────────────────────────────────────────
-/**
- * Apply a move.
- * Returns { state, captured, bonusTurn } or null if invalid.
- */
+// ── applyMove ─────────────────────────────────────────────────────────────────
+
 export function applyMove(state, type, idx, playerId) {
+  const dots = state.dots || 10
+  const { cells, hCount, vCount, boxCount } = grid(dots)
+
   if (type !== 'h' && type !== 'v') return null
   if (type === 'h') {
-    if (idx < 0 || idx >= H_COUNT) return null
-    if (state.hLines[idx])         return null
+    if (idx < 0 || idx >= hCount || state.hLines[idx]) return null
   } else {
-    if (idx < 0 || idx >= V_COUNT) return null
-    if (state.vLines[idx])         return null
+    if (idx < 0 || idx >= vCount || state.vLines[idx]) return null
   }
 
   const newH      = [...state.hLines]
@@ -80,15 +77,10 @@ export function applyMove(state, type, idx, playerId) {
   else              newV[idx] = playerId
 
   let captured = 0
-  for (const bi of affectedBoxes(type, idx)) {
+  for (const bi of affectedBoxes(type, idx, dots, cells)) {
     if (newB[bi]) continue
-    const r      = Math.floor(bi / CELLS)
-    const c      = bi % CELLS
-    const top    = newH[r * CELLS + c]
-    const bottom = newH[(r + 1) * CELLS + c]
-    const left   = newV[r * DOTS + c]
-    const right  = newV[r * DOTS + (c + 1)]
-    if (top && bottom && left && right) {
+    const r = Math.floor(bi / cells), c = bi % cells
+    if (newH[r*cells+c] && newH[(r+1)*cells+c] && newV[r*dots+c] && newV[r*dots+(c+1)]) {
       newB[bi] = playerId
       newScores[playerId] = (newScores[playerId] || 0) + 1
       captured++
@@ -96,17 +88,15 @@ export function applyMove(state, type, idx, playerId) {
   }
 
   const totalClaimed = newB.filter(Boolean).length
-  const phase        = totalClaimed >= BOX_COUNT ? 'done' : 'playing'
-
   return {
     state: {
+      ...state,
       hLines:        newH,
       vLines:        newV,
       boxes:         newB,
       scores:        newScores,
-      currentSlot:   state.currentSlot,
       moveCount:     state.moveCount + 1,
-      phase,
+      phase:         totalClaimed >= boxCount ? 'done' : 'playing',
       turnStartedAt: Date.now(),
     },
     captured,
@@ -114,67 +104,63 @@ export function applyMove(state, type, idx, playerId) {
   }
 }
 
-// ── AI ───────────────────────────────────────────────────────────────────────
+// ── AI ────────────────────────────────────────────────────────────────────────
 
-function getAvailableMoves(state) {
+function availableMoves(state) {
+  const dots = state.dots || 10
+  const { cells, hCount, vCount } = grid(dots)
   const moves = []
-  for (let i = 0; i < H_COUNT; i++) {
-    if (!state.hLines[i]) moves.push({ type: 'h', idx: i })
-  }
-  for (let i = 0; i < V_COUNT; i++) {
-    if (!state.vLines[i]) moves.push({ type: 'v', idx: i })
-  }
+  for (let i = 0; i < hCount; i++) if (!state.hLines[i]) moves.push({ type: 'h', idx: i })
+  for (let i = 0; i < vCount; i++) if (!state.vLines[i]) moves.push({ type: 'v', idx: i })
   return moves
 }
 
-/** Count 3-sided boxes that would be created by this move (giving away captures). */
-function countThreeSidesCreated(state, move) {
-  let count = 0
-  for (const bi of affectedBoxes(move.type, move.idx)) {
-    if (!state.boxes[bi] && sidesDrawn(state.hLines, state.vLines, bi) === 2) count++
+function movesFor3Created(state, move) {
+  const dots = state.dots || 10
+  const cells = dots - 1
+  let n = 0
+  for (const bi of affectedBoxes(move.type, move.idx, dots, cells)) {
+    if (!state.boxes[bi] && sidesDrawn(state.hLines, state.vLines, bi, dots, cells) === 2) n++
   }
-  return count
+  return n
 }
 
 /**
- * Compute the best move for the computer.
- *
- * Beginner: random move.
- * Advanced:
- *   1. Complete a box (4th side)
- *   2. Safe move (doesn't create any 3-sided box)
- *   3. Sacrifice move minimising 3-sided boxes created
+ * Both difficulties always complete a box when possible (greedy capture).
+ * Beginner: otherwise random — may gift boxes to opponent.
+ * Advanced:  otherwise avoids creating 3-sided boxes; if forced, sacrifices the smallest chain.
  */
 export function computeMove(state, difficulty) {
   if (!state || state.phase !== 'playing') return null
-  const moves = getAvailableMoves(state)
-  if (moves.length === 0) return null
+  const moves = availableMoves(state)
+  if (!moves.length) return null
 
-  if (difficulty === 'beginner') {
-    return moves[Math.floor(Math.random() * moves.length)]
-  }
+  const dots  = state.dots || 10
+  const cells = dots - 1
 
-  // Priority 1: complete a box
+  // Priority 1 (both levels): complete any available box
   for (const move of moves) {
-    for (const bi of affectedBoxes(move.type, move.idx)) {
-      if (!state.boxes[bi] && sidesDrawn(state.hLines, state.vLines, bi) === 3) {
+    for (const bi of affectedBoxes(move.type, move.idx, dots, cells)) {
+      if (!state.boxes[bi] && sidesDrawn(state.hLines, state.vLines, bi, dots, cells) === 3) {
         return move
       }
     }
   }
 
-  // Priority 2: safe move (creates no 3-sided box)
-  const safeMoves = moves.filter(m => countThreeSidesCreated(state, m) === 0)
-  if (safeMoves.length > 0) {
-    return safeMoves[Math.floor(Math.random() * safeMoves.length)]
+  // Beginner: random from remaining (doesn't think ahead)
+  if (difficulty === 'beginner') {
+    return moves[Math.floor(Math.random() * moves.length)]
   }
 
-  // Priority 3: minimise 3-sided boxes created
-  let best = null
-  let bestCount = Infinity
-  for (const move of moves) {
-    const n = countThreeSidesCreated(state, move)
-    if (n < bestCount) { bestCount = n; best = move }
+  // Advanced — Priority 2: safe move (doesn't leave a 3-sided box)
+  const safe = moves.filter(m => movesFor3Created(state, m) === 0)
+  if (safe.length) return safe[Math.floor(Math.random() * safe.length)]
+
+  // Advanced — Priority 3: sacrifice minimum 3-sided boxes
+  let best = null, bestN = Infinity
+  for (const m of moves) {
+    const n = movesFor3Created(state, m)
+    if (n < bestN) { bestN = n; best = m }
   }
   return best || moves[0]
 }

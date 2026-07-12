@@ -2389,6 +2389,25 @@
   color: #fff;
 }
 
+.db-chip--wide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.45rem 0.75rem;
+  min-width: 90px;
+}
+
+.db-chip-sub {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #818384;
+  margin-top: 1px;
+}
+
+.db-chip--active .db-chip-sub {
+  color: #e74c3c99;
+}
+
 .db-initials-input {
   display: block;
   width: 100%;

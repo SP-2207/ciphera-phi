@@ -1,8 +1,16 @@
 import { useState } from 'react'
 
+const DOT_PRESETS = [
+  { dots: 5,  label: '5 dots',  sub: '4×4 grid' },
+  { dots: 7,  label: '7 dots',  sub: '6×6 grid' },
+  { dots: 10, label: '10 dots', sub: '9×9 grid' },
+  { dots: 15, label: '15 dots', sub: '14×14 grid' },
+]
+
 export default function DBSetup({ mode, isInvite, joinError, onStart, onBack }) {
   const [playerCount, setPlayerCount] = useState(2)
   const [difficulty,  setDifficulty]  = useState('beginner')
+  const [dots,        setDots]        = useState(10)
   const [initials,    setInitials]    = useState('')
   const [error,       setError]       = useState('')
 
@@ -13,7 +21,7 @@ export default function DBSetup({ mode, isInvite, joinError, onStart, onBack }) 
       return
     }
     setError('')
-    onStart({ playerCount, difficulty, initials: trimmed })
+    onStart({ playerCount, difficulty, dots, initials: trimmed })
   }
 
   const ctaLabel = isInvite
@@ -45,6 +53,25 @@ export default function DBSetup({ mode, isInvite, joinError, onStart, onBack }) 
                   onClick={() => setPlayerCount(n)}
                 >
                   {n}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!isInvite && (
+          <div className="db-setup-group">
+            <span className="db-setup-label">Grid size</span>
+            <div className="db-setup-row db-setup-row--wrap">
+              {DOT_PRESETS.map(p => (
+                <button
+                  key={p.dots}
+                  type="button"
+                  className={`db-chip db-chip--wide${dots === p.dots ? ' db-chip--active' : ''}`}
+                  onClick={() => setDots(p.dots)}
+                >
+                  <span>{p.label}</span>
+                  <span className="db-chip-sub">{p.sub}</span>
                 </button>
               ))}
             </div>

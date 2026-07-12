@@ -35,6 +35,7 @@ export default function DotsBoxesApp({ onHome }) {
   const [mySlot,           setMySlot]           = useState(0)
   const [myPlayerId,       setMyPlayerId]        = useState(null)
   const [difficulty,       setDifficulty]       = useState('beginner')
+  const [dots,             setDots]             = useState(10)
   const [roomId,           setRoomId]           = useState(null)
   const [gameState,        setGameState]        = useState(null)
   const [finalState,       setFinalState]       = useState(null)
@@ -50,6 +51,7 @@ export default function DotsBoxesApp({ onHome }) {
   const modeRef        = useRef(null)
   const roomIdRef      = useRef(null)
   const difficultyRef  = useRef('beginner')
+  const dotsRef        = useRef(10)
   const myPlayerIdRef  = useRef(null)
   const screenRef      = useRef('home')
   const startedRef     = useRef(false)
@@ -61,6 +63,7 @@ export default function DotsBoxesApp({ onHome }) {
   modeRef.current       = mode
   roomIdRef.current     = roomId
   difficultyRef.current = difficulty
+  dotsRef.current       = dots
   myPlayerIdRef.current = myPlayerId
   screenRef.current     = screen
 
@@ -118,7 +121,7 @@ export default function DotsBoxesApp({ onHome }) {
               .map(([id, p]) => ({ id, initials: p.initials, slot: p.slot, isHost: !!p.isHost, isComputer: false }))
               .sort((a, b) => a.slot - b.slot)
             const playerIds    = sorted.map(p => p.id)
-            const initialState = newGameState(playerIds)
+            const initialState = newGameState(playerIds, dotsRef.current)
             setPlayers(sorted)
             playersRef.current = sorted
             startDBGame(roomId, initialState).catch(console.error)
@@ -211,10 +214,13 @@ export default function DotsBoxesApp({ onHome }) {
   }
 
   // ── Setup: start game or create/join room ─────────────────────────────────
-  async function handleStart({ playerCount, difficulty: diff, initials }) {
+  async function handleStart({ playerCount, difficulty: diff, dots: selectedDots, initials }) {
     setJoinError('')
     setDifficulty(diff || 'beginner')
     difficultyRef.current = diff || 'beginner'
+    const dots = selectedDots || 10
+    setDots(dots)
+    dotsRef.current = dots
 
     if (mode === 'computer') {
       const botCount    = playerCount - 1
@@ -229,7 +235,7 @@ export default function DotsBoxesApp({ onHome }) {
         })),
       ]
       const playerIds    = newPlayers.map(p => p.id)
-      const gs           = newGameState(playerIds)
+      const gs           = newGameState(playerIds, dots)
 
       setPlayers(newPlayers)
       playersRef.current    = newPlayers

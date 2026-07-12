@@ -1,36 +1,23 @@
 import { useState, useEffect, useRef } from 'react'
 import { PLAYER_COLORS } from './dbLogic'
 
-const DOTS     = 10
-const CELLS    = 9
-const CELL     = 40
-const PAD      = 20
-const SVG_SIZE = (DOTS - 1) * CELL + 2 * PAD   // 400
+const CELL = 40
+const PAD  = 20
 
-function dotPos(r, c) {
-  return { x: PAD + c * CELL, y: PAD + r * CELL }
-}
-
-function hLineCoords(idx) {
-  const r = Math.floor(idx / CELLS)
-  const c = idx % CELLS
-  return {
-    x1: PAD + c * CELL,
-    y1: PAD + r * CELL,
-    x2: PAD + (c + 1) * CELL,
-    y2: PAD + r * CELL,
+// All grid-size-dependent helpers derived from dots at render time
+function makeGrid(dots) {
+  const cells   = dots - 1
+  const svgSize = cells * CELL + 2 * PAD
+  const dotPos  = (r, c) => ({ x: PAD + c * CELL, y: PAD + r * CELL })
+  const hCoords = idx => {
+    const r = Math.floor(idx / cells), c = idx % cells
+    return { x1: PAD+c*CELL, y1: PAD+r*CELL, x2: PAD+(c+1)*CELL, y2: PAD+r*CELL }
   }
-}
-
-function vLineCoords(idx) {
-  const r = Math.floor(idx / DOTS)
-  const c = idx % DOTS
-  return {
-    x1: PAD + c * CELL,
-    y1: PAD + r * CELL,
-    x2: PAD + c * CELL,
-    y2: PAD + (r + 1) * CELL,
+  const vCoords = idx => {
+    const r = Math.floor(idx / dots), c = idx % dots
+    return { x1: PAD+c*CELL, y1: PAD+r*CELL, x2: PAD+c*CELL, y2: PAD+(r+1)*CELL }
   }
+  return { cells, svgSize, dotPos, hCoords, vCoords }
 }
 
 function playerColor(players, playerId) {
@@ -51,6 +38,9 @@ export default function DBGame({
   const [skipReady,  setSkipReady]  = useState(false)
 
   const skipTimerRef = useRef(null)
+
+  const DOTS = gameState.dots || 10
+  const { cells, svgSize, dotPos, hCoords, vCoords } = makeGrid(DOTS)
 
   const { hLines, vLines, boxes, scores, currentSlot, phase, turnStartedAt } = gameState
   const isDone    = phase === 'done'
@@ -140,15 +130,15 @@ export default function DBGame({
       <div className="db-grid-scroll">
         <svg
           className="db-grid-svg"
-          width={SVG_SIZE}
-          height={SVG_SIZE}
-          viewBox={`0 0 ${SVG_SIZE} ${SVG_SIZE}`}
+          width={svgSize}
+          height={svgSize}
+          viewBox={`0 0 ${svgSize} ${svgSize}`}
         >
           {/* Layer 1: Box fills */}
           {boxes.map((pid, i) => {
             if (!pid) return null
-            const r    = Math.floor(i / CELLS)
-            const c    = i % CELLS
+            const r    = Math.floor(i / cells)
+            const c    = i % cells
             const pos  = dotPos(r, c)
             const slot = players.findIndex(p => p.id === pid)
             const col  = PLAYER_COLORS[slot] || '#888'
@@ -178,7 +168,7 @@ export default function DBGame({
           {/* Layer 2: Drawn lines */}
           {hLines.map((pid, i) => {
             if (!pid) return null
-            const { x1, y1, x2, y2 } = hLineCoords(i)
+            const { x1, y1, x2, y2 } = hCoords(i)
             return (
               <line
                 key={`h-${i}`}
@@ -192,7 +182,7 @@ export default function DBGame({
           })}
           {vLines.map((pid, i) => {
             if (!pid) return null
-            const { x1, y1, x2, y2 } = vLineCoords(i)
+            const { x1, y1, x2, y2 } = vCoords(i)
             return (
               <line
                 key={`v-${i}`}
@@ -208,7 +198,7 @@ export default function DBGame({
           {/* Layer 3: Click targets (only when it's my turn) */}
           {isMyTurn && hLines.map((pid, i) => {
             if (pid) return null
-            const { x1, y1, x2 } = hLineCoords(i)
+            const { x1, y1, x2 } = hCoords(i)
             const isHov = hovered?.type === 'h' && hovered?.idx === i
             return (
               <g key={`ht-${i}`}>
@@ -237,7 +227,7 @@ export default function DBGame({
           })}
           {isMyTurn && vLines.map((pid, i) => {
             if (pid) return null
-            const { x1, y1, y2 } = vLineCoords(i)
+            const { x1, y1, y2 } = vCoords(i)
             const isHov = hovered?.type === 'v' && hovered?.idx === i
             return (
               <g key={`vt-${i}`}>

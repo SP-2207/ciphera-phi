@@ -1,6 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app'
 import { getDatabase, ref, set, get, update, onValue } from 'firebase/database'
-import { H_COUNT, V_COUNT, BOX_COUNT } from './dbLogic'
 
 const firebaseConfig = {
   apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
@@ -43,7 +42,9 @@ function fromSparse(sparse, length) {
 }
 
 export function serializeGameState(state) {
+  const dots = state.dots || 10
   return {
+    dots,
     h:             toSparse(state.hLines),
     v:             toSparse(state.vLines),
     bx:            toSparse(state.boxes),
@@ -57,10 +58,13 @@ export function serializeGameState(state) {
 
 export function deserializeGameState(raw) {
   if (!raw) return null
+  const dots  = raw.dots || 10
+  const cells = dots - 1
   return {
-    hLines:        fromSparse(raw.h,  H_COUNT),
-    vLines:        fromSparse(raw.v,  V_COUNT),
-    boxes:         fromSparse(raw.bx, BOX_COUNT),
+    dots,
+    hLines:        fromSparse(raw.h,  dots * cells),
+    vLines:        fromSparse(raw.v,  cells * dots),
+    boxes:         fromSparse(raw.bx, cells * cells),
     scores:        raw.scores        || {},
     currentSlot:   raw.currentSlot   ?? 0,
     moveCount:     raw.moveCount     ?? 0,
