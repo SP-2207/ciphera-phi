@@ -1790,6 +1790,45 @@
   align-items: stretch;
 }
 
+.t20-picker-scroll {
+  display: flex;
+  flex-direction: column;
+}
+
+.t20-picker-footer {
+  flex-shrink: 0;
+  background: #121213;
+  padding: 0.75rem 1rem 1.25rem;
+  border-top: 1px solid #3a3a3c;
+  display: flex;
+  justify-content: center;
+}
+
+/* Mobile: lock picker screen to viewport so grids scroll and CTA stays pinned */
+@media (max-width: 480px) {
+  .t20-picker-screen {
+    height: 100dvh;
+    overflow: hidden;
+    padding: 0 0.5rem 0;
+  }
+
+  .t20-picker-screen .t20-picker {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    align-self: stretch;
+    padding: 0;
+  }
+
+  .t20-picker-screen .t20-picker-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 0.75rem 0.5rem;
+  }
+}
+
 .t20-pick-label {
   font-size: 0.85rem;
   font-weight: 700;

@@ -25,7 +25,7 @@ export default function T20CountryPicker({ onSelect, onBack }) {
   }
 
   return (
-    <div className="game">
+    <div className="game t20-picker-screen">
       <div className="header">
         <div className="header-left">
           <button className="icon-btn" onClick={onBack}>←</button>
@@ -35,52 +35,55 @@ export default function T20CountryPicker({ onSelect, onBack }) {
       </div>
 
       <div className="t20-picker">
-        {/* Step 1 */}
-        <p className="t20-pick-label">🏏 Pick YOUR team</p>
-        <div className="t20-country-grid">
-          {T20_TEAMS.map(team => (
-            <button
-              key={team.id}
-              className={`t20-country-card${userTeam?.id === team.id ? ' t20-country-card--selected' : ''}${compTeam?.id === team.id ? ' t20-country-card--taken' : ''}`}
-              onClick={() => {
-                if (compTeam?.id === team.id) return
-                setUserTeam(team)
-              }}
-              disabled={compTeam?.id === team.id}
-            >
-              <TeamFlag team={team} />
-              <span className="t20-cc-name">{team.name}</span>
-            </button>
-          ))}
+        <div className="t20-picker-scroll">
+          {/* Step 1 */}
+          <p className="t20-pick-label">🏏 Pick YOUR team</p>
+          <div className="t20-country-grid">
+            {T20_TEAMS.map(team => (
+              <button
+                key={team.id}
+                className={`t20-country-card${userTeam?.id === team.id ? ' t20-country-card--selected' : ''}${compTeam?.id === team.id ? ' t20-country-card--taken' : ''}`}
+                onClick={() => {
+                  if (compTeam?.id === team.id) return
+                  setUserTeam(team)
+                }}
+                disabled={compTeam?.id === team.id}
+              >
+                <TeamFlag team={team} />
+                <span className="t20-cc-name">{team.name}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Step 2 */}
+          <p className="t20-pick-label" style={{ marginTop: '1.2rem' }}>🤖 Pick OPPONENT</p>
+          <div className="t20-country-grid">
+            {T20_TEAMS.map(team => (
+              <button
+                key={team.id}
+                className={`t20-country-card${compTeam?.id === team.id ? ' t20-country-card--selected' : ''}${userTeam?.id === team.id ? ' t20-country-card--taken' : ''}`}
+                onClick={() => {
+                  if (userTeam?.id === team.id) return
+                  setCompTeam(team)
+                }}
+                disabled={userTeam?.id === team.id}
+              >
+                <TeamFlag team={team} />
+                <span className="t20-cc-name">{team.name}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Step 2 */}
-        <p className="t20-pick-label" style={{ marginTop: '1.2rem' }}>🤖 Pick OPPONENT</p>
-        <div className="t20-country-grid">
-          {T20_TEAMS.map(team => (
-            <button
-              key={team.id}
-              className={`t20-country-card${compTeam?.id === team.id ? ' t20-country-card--selected' : ''}${userTeam?.id === team.id ? ' t20-country-card--taken' : ''}`}
-              onClick={() => {
-                if (userTeam?.id === team.id) return
-                setCompTeam(team)
-              }}
-              disabled={userTeam?.id === team.id}
-            >
-              <TeamFlag team={team} />
-              <span className="t20-cc-name">{team.name}</span>
-            </button>
-          ))}
+        <div className="t20-picker-footer">
+          <button
+            className="accept-btn"
+            disabled={!userTeam || !compTeam}
+            onClick={handleContinue}
+          >
+            Set Batting Order →
+          </button>
         </div>
-
-        <button
-          className="accept-btn"
-          style={{ marginTop: '1.5rem' }}
-          disabled={!userTeam || !compTeam}
-          onClick={handleContinue}
-        >
-          Set Batting Order →
-        </button>
       </div>
     </div>
   )
