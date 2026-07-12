@@ -1829,6 +1829,10 @@
     touch-action: pan-y;
     padding: 0 0.75rem 0.5rem;
   }
+
+  .t20-picker-screen .t20-picker-scroll > * {
+    flex-shrink: 0;
+  }
 }
 
 .t20-pick-label {
@@ -1952,6 +1956,11 @@
     overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
+  }
+
+  /* Prevent flex from shrinking sections — lets content overflow and scroll */
+  .t20-order-screen .t20-order-scroll > * {
+    flex-shrink: 0;
   }
 }
 
