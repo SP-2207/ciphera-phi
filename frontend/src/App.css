@@ -1815,16 +1815,18 @@
   .t20-picker-screen .t20-picker {
     flex: 1;
     min-height: 0;
-    overflow: hidden;
     align-self: stretch;
     padding: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .t20-picker-screen .t20-picker-scroll {
     flex: 1;
     min-height: 0;
-    overflow-y: auto;
+    overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
     padding: 0 0.75rem 0.5rem;
   }
 }
@@ -1939,15 +1941,17 @@
   .t20-order-screen .t20-order-wrap {
     flex: 1;
     min-height: 0;
-    overflow: hidden;
     align-self: stretch;
+    display: flex;
+    flex-direction: column;
   }
 
   .t20-order-screen .t20-order-scroll {
     flex: 1;
     min-height: 0;
-    overflow-y: auto;
+    overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
   }
 }
 
