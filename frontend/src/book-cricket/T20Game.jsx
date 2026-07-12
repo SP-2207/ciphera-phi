@@ -430,7 +430,7 @@ export default function T20Game({ userPlayers, compPlayers, userCountry, compCou
   const chaseSummary  = inning === 2 ? `Need ${Math.max(0, target2 - curState.totalRuns)} from ${T20_MAX_BALLS - curState.totalBalls} balls` : null
 
   return (
-    <div className="game">
+    <div className="game t20-game-screen">
       <div className="header">
         <div className="header-left"><button className="icon-btn" onClick={onHome}>←</button></div>
         <h1>{isUserBatting ? 'Your Innings' : 'Computer Batting'}</h1>
@@ -438,47 +438,49 @@ export default function T20Game({ userPlayers, compPlayers, userCountry, compCou
       </div>
 
       <div className="t20-game-wrap">
-        {/* Score bar */}
-        <div className="t20-score-bar">
-          <div className="t20-score-main">
-            <span className="t20-score-flag"><Flag team={curCountry} /></span>
-            <span className="t20-score-runs">{curState.totalRuns}/{curState.wickets}</span>
-            <span className="t20-score-overs">({oversLabel(curState.totalBalls)} ov)</span>
+        <div className="t20-game-scroll">
+          {/* Score bar */}
+          <div className="t20-score-bar">
+            <div className="t20-score-main">
+              <span className="t20-score-flag"><Flag team={curCountry} /></span>
+              <span className="t20-score-runs">{curState.totalRuns}/{curState.wickets}</span>
+              <span className="t20-score-overs">({oversLabel(curState.totalBalls)} ov)</span>
+            </div>
+            <div className="t20-score-meta">
+              <span>{overLabel}</span>
+              <span>CRR {crr}</span>
+              {rrr && <span>RRR {rrr}</span>}
+            </div>
+            {chaseSummary && <div className="t20-chase-summary">{chaseSummary}</div>}
           </div>
-          <div className="t20-score-meta">
-            <span>{overLabel}</span>
-            <span>CRR {crr}</span>
-            {rrr && <span>RRR {rrr}</span>}
-          </div>
-          {chaseSummary && <div className="t20-chase-summary">{chaseSummary}</div>}
+
+          {/* Compact batting table — show batted + current batsman */}
+          <BattingCard state={curState} country={curCountry} compact />
+
+          {/* Current over balls */}
+          {(flipPhase === 'revealing' || flipPhase === 'summary') && (
+            <div className="t20-over-section">
+              <span className="t20-over-label">Over {overNum + 1}</span>
+              <div className="t20-over-balls">
+                {allOverBalls.map((ball, i) => {
+                  const revealed = revealedBalls.length > i
+                  const appearing = revealedBalls.length === i + 1
+                  return revealed ? <T20Ball key={i} ball={ball} appearing={appearing} /> : (
+                    <span key={i} className="t20-ball t20-ball--hidden">?</span>
+                  )
+                })}
+              </div>
+              {flipPhase === 'summary' && (
+                <div className="t20-over-summary">
+                  Over {overNum + 1}: {allOverBalls.reduce((s, b) => s + b.runs, 0)} runs
+                  {allOverBalls.some(b => b.wicket) && ', 1 wkt'}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Compact batting table — show batted + current batsman */}
-        <BattingCard state={curState} country={curCountry} compact />
-
-        {/* Current over balls */}
-        {(flipPhase === 'revealing' || flipPhase === 'summary') && (
-          <div className="t20-over-section">
-            <span className="t20-over-label">Over {overNum + 1}</span>
-            <div className="t20-over-balls">
-              {allOverBalls.map((ball, i) => {
-                const revealed = revealedBalls.length > i
-                const appearing = revealedBalls.length === i + 1
-                return revealed ? <T20Ball key={i} ball={ball} appearing={appearing} /> : (
-                  <span key={i} className="t20-ball t20-ball--hidden">?</span>
-                )
-              })}
-            </div>
-            {flipPhase === 'summary' && (
-              <div className="t20-over-summary">
-                Over {overNum + 1}: {allOverBalls.reduce((s, b) => s + b.runs, 0)} runs
-                {allOverBalls.some(b => b.wicket) && ', 1 wkt'}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Action area */}
+        {/* Action area — pinned footer on mobile */}
         <div className="t20-action-area">
           {/* Flip phase */}
           {flipPhase === 'flip' && (

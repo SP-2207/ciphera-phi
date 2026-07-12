@@ -47,6 +47,11 @@ export default function BookFlip({
   const timerRef     = useRef(null)
   const tickRef      = useRef(null)
   const flipKeyRef   = useRef(0)
+  // Mutable refs so async callbacks always use current values (avoid stale closures)
+  const phaseRef     = useRef('idle')   // mirrors phase state, writable by setters
+  const settledRef   = useRef(false)    // guards against double-settle
+  const onResultRef  = useRef(onResult) // always latest onResult prop
+  onResultRef.current = onResult
 
   useEffect(() => {
     if (isPlayerMode) {
@@ -62,17 +67,17 @@ export default function BookFlip({
 
   // ── Player mode ───────────────────────────────────────────
   function startPlayerFlip() {
+    settledRef.current   = false
+    phaseRef.current     = 'flipping'
     startTimeRef.current = Date.now()
     setPhase('flipping')
 
-    // Separate fast tick for display and slower for visual page-flip animation
     let flipFrame = 0
     tickRef.current = setInterval(() => {
       const elapsed = Date.now() - startTimeRef.current
       const page = pageFromElapsed(elapsed)
       setDisplay(page)
 
-      // Update visual flip every ~120ms (every 3rd tick)
       flipFrame++
       if (flipFrame % 3 === 0) {
         setPageKey(k => k + 1)
@@ -86,17 +91,20 @@ export default function BookFlip({
   }
 
   function stopPlayerFlip() {
-    if (phase !== 'flipping') return
+    if (phaseRef.current !== 'flipping') return  // use ref — never stale
     clearInterval(tickRef.current)
     const elapsed = Date.now() - startTimeRef.current
     settlePlayer(pageFromElapsed(elapsed))
   }
 
   function settlePlayer(page) {
-    finalRef.current = page
+    if (settledRef.current) return   // prevent double-settle
+    settledRef.current = true
+    phaseRef.current   = 'settled'
+    finalRef.current   = page
     setDisplay(page)
     setPhase('settled')
-    timerRef.current = setTimeout(() => onResult(page), 600)
+    timerRef.current = setTimeout(() => onResultRef.current(page), 600)
   }
 
   // ── Auto / computer mode (unchanged) ─────────────────────
@@ -117,7 +125,7 @@ export default function BookFlip({
           setDisplay(finalRef.current)
           setPageKey(k => k + 1)
           setPhase('settled')
-          timerRef.current = setTimeout(() => onResult(finalRef.current), 500)
+          timerRef.current = setTimeout(() => onResultRef.current(finalRef.current), 500)
         } else {
           setDisplay(Math.floor(Math.random() * maxPages) + 1)
           setPageKey(k => k + 1)

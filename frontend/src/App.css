@@ -1727,20 +1727,42 @@
   }
 }
 
-/* T20 mobile: stretch game wrap and pin action area */
+/* T20 game mobile: dvh layout so action area is always visible */
 @media (max-width: 480px) {
-  .t20-game-wrap {
-    align-self: stretch;
-    padding-bottom: 0;
+  .t20-game-screen {
+    height: 100dvh;
+    overflow: hidden;
+    padding: 0 0.5rem 0;
   }
 
-  .t20-action-area {
-    position: sticky;
-    bottom: 0;
-    background: #121213;
+  .t20-game-screen .t20-game-wrap {
+    flex: 1;
+    min-height: 0;
+    align-self: stretch;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .t20-game-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    padding: 0 0.25rem 0.5rem;
+  }
+
+  .t20-game-scroll > * {
+    flex-shrink: 0;
+  }
+
+  .t20-game-screen .t20-action-area {
+    position: static;
+    flex-shrink: 0;
     padding: 0.6rem 0.75rem 1rem;
     border-top: 1px solid #3a3a3c;
-    z-index: 10;
+    background: #121213;
   }
 }
 
