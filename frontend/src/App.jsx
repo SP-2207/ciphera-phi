@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import CipheraApp from './CipheraApp'
+import CipheraApp    from './CipheraApp'
 import BookCricketApp from './BookCricketApp'
+import DotsBoxesApp  from './DotsBoxesApp'
 import './App.css'
 
 const GAMES = [
@@ -20,6 +21,14 @@ const GAMES = [
     accent: '#538d4e',
     tag: 'Cricket',
   },
+  {
+    id: 'dots-boxes',
+    name: 'Dots & Boxes',
+    icon: '⬛',
+    desc: 'Draw lines to claim boxes on a 10×10 grid',
+    accent: '#e74c3c',
+    tag: 'Strategy',
+  },
 ]
 
 export default function App() {
@@ -31,6 +40,8 @@ export default function App() {
       setCurrentGame('ciphera')
     } else if (hash === 'book-cricket' || /^book-cricket\/[A-Z][A-Z0-9]{5}$/.test(hash)) {
       setCurrentGame('book-cricket')
+    } else if (hash === 'dots-boxes' || /^dots-boxes\/[A-Z][A-Z0-9]{5}$/.test(hash)) {
+      setCurrentGame('dots-boxes')
     }
   }, [])
 
@@ -46,6 +57,7 @@ export default function App() {
 
   if (currentGame === 'ciphera')      return <CipheraApp onHome={goHome} />
   if (currentGame === 'book-cricket') return <BookCricketApp onHome={goHome} />
+  if (currentGame === 'dots-boxes')   return <DotsBoxesApp onHome={goHome} />
 
   return (
     <div className="hub">
