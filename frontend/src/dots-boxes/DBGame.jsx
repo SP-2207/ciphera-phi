@@ -36,8 +36,11 @@ export default function DBGame({
 }) {
   const [hovered,    setHovered]    = useState(null)   // { type, idx }
   const [skipReady,  setSkipReady]  = useState(false)
+  const [lastMove,   setLastMove]   = useState(null)   // { type, idx }
 
   const skipTimerRef = useRef(null)
+  const prevHRef     = useRef(null)
+  const prevVRef     = useRef(null)
 
   const DOTS = gameState.dots || 10
   const { cells, svgSize, dotPos, hCoords, vCoords } = makeGrid(DOTS)
@@ -63,6 +66,22 @@ export default function DBGame({
 
     return () => { if (skipTimerRef.current) clearTimeout(skipTimerRef.current) }
   }, [currentSlot, turnStartedAt, mode, mySlot, isDone]) // eslint-disable-line
+
+  // ── Track last placed line for highlight ───────────────────────────────────
+  useEffect(() => {
+    const prevH = prevHRef.current
+    const prevV = prevVRef.current
+    if (prevH !== null) {
+      for (let i = 0; i < hLines.length; i++) {
+        if (hLines[i] && !prevH[i]) { setLastMove({ type: 'h', idx: i }); break }
+      }
+      for (let i = 0; i < vLines.length; i++) {
+        if (vLines[i] && !prevV[i]) { setLastMove({ type: 'v', idx: i }); break }
+      }
+    }
+    prevHRef.current = hLines
+    prevVRef.current = vLines
+  }, [gameState.moveCount]) // eslint-disable-line
 
   // ── Turn status ────────────────────────────────────────────────────────────
   let turnText
@@ -170,9 +189,10 @@ export default function DBGame({
             )
           })}
 
-          {/* Layer 2: Drawn lines */}
+          {/* Layer 2: Drawn lines (last move rendered separately on top) */}
           {hLines.map((pid, i) => {
             if (!pid) return null
+            if (lastMove?.type === 'h' && lastMove?.idx === i) return null
             const { x1, y1, x2, y2 } = hCoords(i)
             return (
               <line
@@ -187,6 +207,7 @@ export default function DBGame({
           })}
           {vLines.map((pid, i) => {
             if (!pid) return null
+            if (lastMove?.type === 'v' && lastMove?.idx === i) return null
             const { x1, y1, x2, y2 } = vCoords(i)
             return (
               <line
@@ -199,6 +220,25 @@ export default function DBGame({
               />
             )
           })}
+
+          {/* Layer 2b: Last move — white highlight on top */}
+          {lastMove && (() => {
+            const pid = lastMove.type === 'h' ? hLines[lastMove.idx] : vLines[lastMove.idx]
+            if (!pid) return null
+            const { x1, y1, x2, y2 } = lastMove.type === 'h'
+              ? hCoords(lastMove.idx)
+              : vCoords(lastMove.idx)
+            return (
+              <line
+                key="last-move"
+                x1={x1} y1={y1} x2={x2} y2={y2}
+                stroke="#ffffff"
+                strokeWidth="4"
+                strokeLinecap="round"
+                pointerEvents="none"
+              />
+            )
+          })()}
 
           {/* Layer 3: Click targets (only when it's my turn) */}
           {isMyTurn && hLines.map((pid, i) => {
