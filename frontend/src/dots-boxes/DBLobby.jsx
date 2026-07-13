@@ -1,12 +1,36 @@
+import { useState } from 'react'
+
 export default function DBLobby({ roomId, playerCount, players, myPlayerId, onBack }) {
   const COLORS = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12']
+  const [copied, setCopied] = useState(false)
 
-  function copyInvite() {
-    const url =
-      window.location.origin +
-      window.location.pathname +
-      `#dots-boxes/${roomId}`
-    navigator.clipboard.writeText(url).catch(() => {})
+  const shareUrl     = `${window.location.origin}${window.location.pathname}#dots-boxes/${roomId}`
+  const shareMessage =
+    `⬛ You've been challenged to Dots & Boxes!\n` +
+    `Draw lines, claim boxes and outsmart your opponent.\n` +
+    `Join here: ${shareUrl}`
+
+  const canNativeShare = typeof navigator !== 'undefined' && !!navigator.share
+
+  function copyMessage() {
+    navigator.clipboard.writeText(shareMessage).catch(() => {
+      const el = document.createElement('textarea')
+      el.value = shareMessage
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
+    })
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2500)
+  }
+
+  function nativeShare() {
+    navigator.share({
+      title: '⬛ Dots & Boxes Challenge!',
+      text:  shareMessage,
+      url:   shareUrl,
+    }).catch(() => {})
   }
 
   return (
@@ -20,18 +44,26 @@ export default function DBLobby({ roomId, playerCount, players, myPlayerId, onBa
       </div>
 
       <div className="db-lobby">
-        <p className="db-lobby-status">Waiting for players…</p>
+        <p className="db-lobby-status">
+          {players.length < playerCount ? 'Waiting for players…' : 'Starting game…'}
+        </p>
 
         <div className="db-lobby-code">{roomId}</div>
 
-        <p className="db-lobby-desc">
-          Share this link so your friends can join your Dots &amp; Boxes game.
-          The game starts automatically once everyone joins.
-        </p>
+        <div className="db-share-box">
+          <p className="db-share-preview">{shareMessage}</p>
+        </div>
 
-        <button className="accept-btn" style={{ marginBottom: '1.5rem' }} onClick={copyInvite}>
-          Copy Invite Link
-        </button>
+        <div className="db-lobby-btns">
+          <button className="db-copy-btn" onClick={copyMessage}>
+            {copied ? '✓ Copied!' : '📋 Copy Message'}
+          </button>
+          {canNativeShare && (
+            <button className="db-native-share-btn" onClick={nativeShare}>
+              ↗ Share
+            </button>
+          )}
+        </div>
 
         <div className="db-lobby-players">
           {Array.from({ length: playerCount }, (_, i) => {
