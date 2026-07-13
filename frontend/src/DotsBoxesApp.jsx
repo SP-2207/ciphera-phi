@@ -150,7 +150,11 @@ export default function DotsBoxesApp({ onHome }) {
             const initialState = newGameState(playerIds, dotsRef.current)
             setPlayers(sorted)
             playersRef.current = sorted
-            startDBGame(roomId, initialState).catch(console.error)
+            // Transition host immediately (don't wait for Firebase round-trip)
+            setGameState(initialState)
+            gameStateRef.current = initialState
+            setScreen('game')
+            startDBGame(roomIdRef.current, initialState).catch(console.error)
           }
         }
       }
@@ -177,6 +181,19 @@ export default function DotsBoxesApp({ onHome }) {
     unsubRef.current = unsub
     return () => { if (unsubRef.current) { unsubRef.current(); unsubRef.current = null } }
   }, [roomId, mode]) // eslint-disable-line
+
+  // ── Safety net: gameState arrived but screen not updated (race condition) ──
+  useEffect(() => {
+    if (!gameState) return
+    if (screenRef.current === 'lobby') {
+      if (gameState.phase === 'done') {
+        setFinalState(f => f || gameState)
+        setScreen('result')
+      } else {
+        setScreen('game')
+      }
+    }
+  }, [gameState]) // eslint-disable-line
 
   // ── Computer AI trigger ───────────────────────────────────────────────────
   useEffect(() => {
