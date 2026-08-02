@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import CipheraApp    from './CipheraApp'
 import BookCricketApp from './BookCricketApp'
 import DotsBoxesApp  from './DotsBoxesApp'
+import PenFightApp   from './PenFightApp'
 import './App.css'
 
 const GAMES = [
@@ -25,9 +26,17 @@ const GAMES = [
     id: 'dots-boxes',
     name: 'Dots & Boxes',
     icon: '⬛',
-    desc: 'Draw lines to claim boxes on a 10×10 grid',
+    desc: 'Draw lines, claim boxes and outsmart your opponent',
     accent: '#e74c3c',
     tag: 'Strategy',
+  },
+  {
+    id: 'pen-fight',
+    name: 'Pen Fight',
+    icon: '✏️',
+    desc: 'Flick your pen and knock the opponent off the desk',
+    accent: '#9b59b6',
+    tag: 'Physics',
   },
 ]
 
@@ -42,6 +51,8 @@ export default function App() {
       setCurrentGame('book-cricket')
     } else if (hash === 'dots-boxes' || /^dots-boxes\/[A-Z][A-Z0-9]{5}$/.test(hash)) {
       setCurrentGame('dots-boxes')
+    } else if (hash === 'pen-fight' || /^pen-fight\/[A-Z][A-Z0-9]{5}$/.test(hash)) {
+      setCurrentGame('pen-fight')
     }
   }, [])
 
@@ -58,6 +69,7 @@ export default function App() {
   if (currentGame === 'ciphera')      return <CipheraApp onHome={goHome} />
   if (currentGame === 'book-cricket') return <BookCricketApp onHome={goHome} />
   if (currentGame === 'dots-boxes')   return <DotsBoxesApp onHome={goHome} />
+  if (currentGame === 'pen-fight')    return <PenFightApp onHome={goHome} />
 
   return (
     <div className="hub">

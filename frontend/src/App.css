@@ -2731,3 +2731,261 @@
   margin-top: 0.5rem;
 }
 
+/* ════════════════════════════════════════════════════
+   PEN FIGHT
+   ════════════════════════════════════════════════════ */
+
+/* ── Toss screen ─────────────────────────────────── */
+
+.pf-toss-screen {
+  display: flex;
+  flex-direction: column;
+}
+
+.pf-toss-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.pf-coin {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #f5d060, #c8930a);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5), inset 0 -3px 6px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s;
+}
+
+.pf-coin--flip {
+  animation: pf-coinflip 1s ease-in-out;
+}
+
+@keyframes pf-coinflip {
+  0%   { transform: rotateY(0deg);    }
+  25%  { transform: rotateY(180deg);  }
+  50%  { transform: rotateY(360deg);  }
+  75%  { transform: rotateY(540deg);  }
+  100% { transform: rotateY(720deg);  }
+}
+
+.pf-coin-face {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #6b4200;
+  user-select: none;
+}
+
+.pf-toss-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #d7dadc;
+  text-align: center;
+}
+
+.pf-toss-btns {
+  display: flex;
+  gap: 1rem;
+}
+
+.pf-toss-result {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pf-toss-call {
+  font-size: 0.95rem;
+  color: #818384;
+}
+
+.pf-toss-winner {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #d7dadc;
+}
+
+.pf-toss-sub {
+  font-size: 0.85rem;
+  color: #818384;
+}
+
+/* ── Game screen ─────────────────────────────────── */
+
+.pf-game-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+  position: relative;
+}
+
+.pf-score-bar {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.35rem 1rem;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pf-score-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid var(--chip-color, #888);
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+.pf-score-chip--active {
+  background: rgba(255,255,255,0.14);
+  box-shadow: 0 0 0 1px var(--chip-color, #888);
+}
+
+.pf-score-chip span {
+  color: var(--chip-color, #d7dadc);
+  font-weight: 600;
+}
+
+.pf-score-chip strong {
+  font-size: 1.1rem;
+  color: #d7dadc;
+}
+
+.pf-round-badge {
+  font-size: 0.8rem;
+  color: #818384;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid #3a3a3c;
+  border-radius: 10px;
+}
+
+/* ── Desk ────────────────────────────────────────── */
+
+.pf-desk-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0.5rem;
+}
+
+.pf-desk-svg {
+  /* Dimensions set explicitly in JS — CSS just adds visuals */
+  display: block;
+  border-radius: 6px;
+  box-shadow: 0 6px 30px rgba(0,0,0,0.6);
+}
+
+/* ── Status / controls ───────────────────────────── */
+
+.pf-status {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #818384;
+  padding: 0.3rem 1rem;
+  flex-shrink: 0;
+  min-height: 1.6rem;
+}
+
+.pf-placement-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.4rem 1rem 0.8rem;
+  flex-shrink: 0;
+}
+
+.pf-rot-btn {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid #3a3a3c;
+  color: #d7dadc;
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.pf-rot-btn:active {
+  background: rgba(255,255,255,0.16);
+}
+
+.pf-place-btn {
+  padding: 0.55rem 1.2rem;
+  font-size: 0.9rem;
+}
+
+/* ── Power bar ───────────────────────────────────── */
+
+.pf-power-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.3rem 1.2rem 0.7rem;
+  flex-shrink: 0;
+}
+
+.pf-power-label {
+  font-size: 0.78rem;
+  color: #818384;
+  white-space: nowrap;
+}
+
+.pf-power-track {
+  flex: 1;
+  height: 8px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.pf-power-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.04s linear, background 0.2s;
+}
+
+/* ── Round result overlay ────────────────────────── */
+
+.pf-round-overlay {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,0.85);
+  border-top: 1px solid #3a3a3c;
+  padding: 1.1rem 1.5rem;
+  text-align: center;
+  animation: pf-slide-up 0.3s ease;
+  z-index: 20;
+}
+
+@keyframes pf-slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.pf-round-msg {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #d7dadc;
+}
+
+/* Result screen reuses .db-result and its children (defined in Dots & Boxes section) */
+
+
