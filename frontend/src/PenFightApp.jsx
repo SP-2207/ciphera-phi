@@ -298,14 +298,18 @@ export default function PenFightApp({ onHome }) {
   }
 
   // ── Flick ─────────────────────────────────────────────────────────────────
-  function handleFlick(finalP1, finalP2, p1Fell, p2Fell) {
+  function handleFlick(finalP1, finalP2, p1Fell, p2Fell, fromP1, fromP2, flickSlot, power, dir) {
     const gs  = gameStateRef.current
     const ps  = playersRef.current
     if (!gs)  return
     const p1Id = ps[0]?.id
     const p2Id = ps[1]?.id
 
-    const newGs = applyFlickResult(gs, p1Id, p2Id, finalP1, finalP2, p1Fell, p2Fell)
+    const newGs = {
+      ...applyFlickResult(gs, p1Id, p2Id, finalP1, finalP2, p1Fell, p2Fell),
+      // Store flick params so the remote viewer can replay the real physics
+      lastFlick: { slot: flickSlot, power, dir, fromP1, fromP2 },
+    }
     setGameState(newGs)
     gameStateRef.current = newGs
 

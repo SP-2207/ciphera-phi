@@ -37,6 +37,7 @@ function deserializePen(raw) {
 }
 
 export function serializeGameState(state) {
+  const lf = state.lastFlick
   return {
     totalRounds:  state.totalRounds,
     scores:       state.scores  || {},
@@ -50,11 +51,20 @@ export function serializeGameState(state) {
     firstTurn:    state.firstTurn || null,
     currentTurn:  state.currentTurn || null,
     lastResult:   state.lastResult || null,
+    // Flick params so the viewer can re-run the real simulation, not just lerp
+    lastFlick:    lf ? {
+      slot:  lf.slot,
+      power: lf.power,
+      dir:   lf.dir,
+      from1: serializePen(lf.fromP1),
+      from2: serializePen(lf.fromP2),
+    } : null,
   }
 }
 
 export function deserializeGameState(raw) {
   if (!raw) return null
+  const lf = raw.lastFlick
   return {
     totalRounds:  raw.totalRounds,
     scores:       raw.scores  || {},
@@ -68,6 +78,13 @@ export function deserializeGameState(raw) {
     firstTurn:    raw.firstTurn || null,
     currentTurn:  raw.currentTurn || null,
     lastResult:   raw.lastResult || null,
+    lastFlick:    lf ? {
+      slot:  lf.slot,
+      power: lf.power,
+      dir:   lf.dir,
+      fromP1: deserializePen(lf.from1),
+      fromP2: deserializePen(lf.from2),
+    } : null,
   }
 }
 

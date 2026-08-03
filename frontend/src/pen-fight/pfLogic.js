@@ -29,9 +29,10 @@ export function newGameState(p1Id, p2Id, totalRounds, firstTurnId) {
     pen2:        null,
     p1Placed:    false,
     p2Placed:    false,
-    firstTurn:   firstTurnId,   // who flicks first this round
-    currentTurn: null,          // active during 'playing'
-    lastResult:  null,          // { p1Fell, p2Fell, roundOver }
+    firstTurn:   firstTurnId,
+    currentTurn: null,
+    lastResult:  null,
+    lastFlick:   null,
   }
 }
 
@@ -49,6 +50,7 @@ export function startNextRound(state, p1Id, p2Id) {
     firstTurn:    newFirst,
     currentTurn:  null,
     lastResult:   null,
+    lastFlick:    null,
   }
 }
 
@@ -66,6 +68,7 @@ export function replayRound(state, p1Id, p2Id) {
     firstTurn:   newFirst,
     currentTurn: null,
     lastResult:  null,
+    lastFlick:   null,
   }
 }
 

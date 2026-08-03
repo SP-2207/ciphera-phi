@@ -106,7 +106,7 @@ export default function PFGame({
 }) {
   const {
     phase, pen1, pen2, p1Placed, p2Placed,
-    currentTurn, scores, currentRound, totalRounds, lastResult,
+    currentTurn, scores, currentRound, totalRounds, lastResult, lastFlick,
   } = gameState
 
   const isFlipped  = mySlot === 1
@@ -167,7 +167,7 @@ export default function PFGame({
   const prevPen2Ref = useRef(pen2)
 
   useEffect(() => {
-    if (localAnimRef.current) return
+    if (localAnimRef.current) return   // own animation already running — skip
     const prev1 = prevPen1Ref.current
     const prev2 = prevPen2Ref.current
 
@@ -175,21 +175,39 @@ export default function PFGame({
       const moved = Math.hypot(pen1.x - prev1.x, pen1.y - prev1.y) > 1 ||
                     Math.hypot(pen2.x - prev2.x, pen2.y - prev2.y) > 1
       if (moved) {
-        const frames = makeLerpFrames(
-          prev1, prev2, pen1, pen2,
-          lastResult?.p1Fell, lastResult?.p2Fell
-        )
-        startAnimation(frames, () => {
-          setFell1(lastResult?.p1Fell || false)
-          setFell2(lastResult?.p2Fell || false)
-        })
+        prevPen1Ref.current = pen1
+        prevPen2Ref.current = pen2
+
+        if (lastFlick?.fromP1 && lastFlick?.fromP2) {
+          // Re-run the real physics so the viewer sees the actual trajectory + collision
+          const sim = runSimulation(
+            lastFlick.fromP1, lastFlick.fromP2,
+            lastFlick.slot, lastFlick.power, lastFlick.dir
+          )
+          setFell1(false)
+          setFell2(false)
+          startAnimation(sim.frames, () => {
+            setDisp1(sim.finalP1)
+            setDisp2(sim.finalP2)
+            setFell1(sim.p1Fell)
+            setFell2(sim.p2Fell)
+          })
+        } else {
+          // Fallback: linear interpolation (placement syncs, no flick data)
+          const frames = makeLerpFrames(prev1, prev2, pen1, pen2,
+            lastResult?.p1Fell, lastResult?.p2Fell)
+          startAnimation(frames, () => {
+            setFell1(lastResult?.p1Fell || false)
+            setFell2(lastResult?.p2Fell || false)
+          })
+        }
+        return   // animation handles disp1/disp2 — don't overwrite below
       }
     }
 
-    if (pen1) prevPen1Ref.current = pen1
-    if (pen2) prevPen2Ref.current = pen2
-    if (pen1) setDisp1(pen1)
-    if (pen2) setDisp2(pen2)
+    // No animation needed (first sync or position unchanged)
+    if (pen1) { prevPen1Ref.current = pen1; setDisp1(pen1) }
+    if (pen2) { prevPen2Ref.current = pen2; setDisp2(pen2) }
   }, [pen1, pen2]) // eslint-disable-line
 
   // ── Reset display state at the start of every new round ─────────────────
@@ -339,7 +357,8 @@ export default function PFGame({
       setFell2(result.p2Fell)
       prevPen1Ref.current = result.finalP1
       prevPen2Ref.current = result.finalP2
-      onFlick(result.finalP1, result.finalP2, result.p1Fell, result.p2Fell)
+      onFlick(result.finalP1, result.finalP2, result.p1Fell, result.p2Fell,
+              curD1, curD2, mySlot, power, dir)
     })
   }
 
@@ -366,7 +385,8 @@ export default function PFGame({
         setFell2(result.p2Fell)
         prevPen1Ref.current = result.finalP1
         prevPen2Ref.current = result.finalP2
-        onFlick(result.finalP1, result.finalP2, result.p1Fell, result.p2Fell)
+        onFlick(result.finalP1, result.finalP2, result.p1Fell, result.p2Fell,
+                curD1, curD2, 1, power, dir)
       })
     }, 1800)
 
